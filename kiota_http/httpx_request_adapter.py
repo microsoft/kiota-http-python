@@ -50,7 +50,7 @@ class HttpxRequestAdapter(RequestAdapter):
         self._serialization_writer_factory = serialization_writer_factory
         if not http_client:
             raise TypeError("Http Client cannot be null")
-        self._http_client = http_client
+        self._http_client = http_client.client
 
         self._base_url: str = ''
 
@@ -114,6 +114,7 @@ class HttpxRequestAdapter(RequestAdapter):
 
         if response_handler:
             return await response_handler.handle_response_async(response, error_map)
+        
         await self.throw_failed_responses(response, error_map)
         if self._should_return_none(response):
             return None
@@ -279,7 +280,7 @@ class HttpxRequestAdapter(RequestAdapter):
     async def throw_failed_responses(
         self, response: httpx.Response, error_map: Dict[str, ParsableFactory]
     ) -> None:
-        if response.ok:
+        if response.is_success:
             return
 
         status_code = response.status_code
@@ -318,15 +319,16 @@ class HttpxRequestAdapter(RequestAdapter):
         await self._authentication_provider.authenticate_request(request_info)
 
         request = self.get_request_from_request_information(request_info)
-        return self._http_client.client.send(request, request_options=request_info.request_options)
+        return await self._http_client.send(request)
 
     def set_base_url_for_request_information(self, request_info: RequestInformation) -> None:
-        request_info.path_parameters["base_url"] = self.base_url
+        request_info.path_parameters["baseurl"] = self.base_url
 
     def get_request_from_request_information(
         self, request_info: RequestInformation
     ) -> httpx.Request:
-        request = httpx.Request(
+        print(request_info.url)
+        request = self._http_client.build_request(
             method=request_info.http_method.value,
             url=request_info.url,
             headers=request_info.request_headers,

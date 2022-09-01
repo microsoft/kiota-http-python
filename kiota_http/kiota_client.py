@@ -1,4 +1,3 @@
-from multiprocessing.connection import Client
 from typing import Optional
 
 import httpx
@@ -7,7 +6,7 @@ from .kiota_client_factory import KiotaClientFactory
 
 
 class KiotaClient:
-    """Default requests client with options and a middleware pipleline for requests execution.
+    """Default httpx client with options and a middleware pipleline for requests execution.
     """
     __instance: Optional[httpx.AsyncClient] = None
 

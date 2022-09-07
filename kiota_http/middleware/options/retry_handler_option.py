@@ -1,4 +1,4 @@
-from typing import Set
+from typing import FrozenSet, Set
 
 from kiota_abstractions.request_option import RequestOption
 
@@ -21,12 +21,6 @@ class RetryHandlerOption(RequestOption):
     
     # Default value for should retry
     DEFAULT_SHOULD_RETRY: bool = True 
-    
-    # A list of status codes that needs to be retried
-    # 429 - Too many requests 
-    # 503 - Service unavailable
-    # 504 - Gateway timeout
-    DEFAULT_RETRY_STATUS_CODES: Set[int] = {429, 503, 504}
     
     RETRY_HANDLER_OPTION_KEY = 'RetryHandlerOptionKey'
     
@@ -55,7 +49,7 @@ class RetryHandlerOption(RequestOption):
     def max_delay(self) -> int:
         return self._max_delay
     
-    @property.setter
+    @max_delay.setter
     def max_delay(self, value: int) -> None:
         if value > self.MAX_DELAY:
             raise ValueError(f'MaxLimitExceeded. Delay should not be more than ${self.MAX_DELAY}')
@@ -67,7 +61,7 @@ class RetryHandlerOption(RequestOption):
     def max_retry(self) -> int:
         return self._max_retry
     
-    @property.setter
+    @max_retry.setter
     def max_retry(self, value: int) -> None:
         if value > self.MAX_MAX_RETRIES:
             raise ValueError(f'MaxLimitExceeded. MaxRetries should not be more than ${self.MAX_MAX_RETRIES}')
@@ -79,7 +73,7 @@ class RetryHandlerOption(RequestOption):
     def should_retry(self) -> bool:
         return self._should_retry
     
-    @property.setter
+    @should_retry.setter
     def should_retry(self, value: bool) -> None:
         self._should_retry = value
 

@@ -10,6 +10,6 @@ class TelemetrytHandlerOption(RequestOption):
     def telemetry_configurator(self) -> Callable[[], None]:
         return self._telemetry_configurator
     
-    @property.setter
+    @telemetry_configurator.setter
     def telemetry_configurator(self, value: Callable[[], None]) -> None:
         self._telemetry_configurator = value

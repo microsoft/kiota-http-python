@@ -1,6 +1,5 @@
-from typing import Optional
-
-import httpx
+from __future__ import annotations
+from typing import Dict, Optional
 
 from .kiota_client_factory import KiotaClientFactory
 
@@ -8,7 +7,7 @@ from .kiota_client_factory import KiotaClientFactory
 class KiotaClient:
     """Default httpx client with options and a middleware pipleline for requests execution.
     """
-    __instance: Optional[httpx.AsyncClient] = None
+    __instance: Optional[KiotaClient] = None
 
     def __new__(cls, *args, **kwargs):
         if not KiotaClient.__instance:

@@ -50,6 +50,7 @@ class HttpxRequestAdapter(RequestAdapter):
         self._serialization_writer_factory = serialization_writer_factory
         if not http_client:
             raise TypeError("Http Client cannot be null")
+        
         self._http_client = http_client.client
 
         self._base_url: str = ''
@@ -319,19 +320,24 @@ class HttpxRequestAdapter(RequestAdapter):
         await self._authentication_provider.authenticate_request(request_info)
 
         request = self.get_request_from_request_information(request_info)
-        return await self._http_client.send(request)
-
+        
+        # Pass request options in the headers as send method does not support.
+        # The header will be removed by the last middleware before the request is sent.
+        request.headers["request_options"] = str(request_info.request_options)
+        
+        resp = await self._http_client.send(request)
+        await self._http_client.aclose()
+        return resp
     def set_base_url_for_request_information(self, request_info: RequestInformation) -> None:
         request_info.path_parameters["baseurl"] = self.base_url
 
     def get_request_from_request_information(
         self, request_info: RequestInformation
     ) -> httpx.Request:
-        print(request_info.url)
         request = self._http_client.build_request(
             method=request_info.http_method.value,
             url=request_info.url,
             headers=request_info.request_headers,
-            data=request_info.content,
+            content=request_info.content,
         )
         return request

@@ -27,20 +27,20 @@ class ParametersNameDecodingHandlerOption(RequestOption):
     def enabled(self):
         """Whether to decode the specified characters in the request query parameters"""
         return self._enable
-    
+
     @enabled.setter
     def enabled(self, value: bool):
         self._enable = value
-        
+
     @property
     def characters_to_decode(self):
         """The list of characters to decode in the request query parameters names before
         executing the request"""
         return self._characters_to_decode
-    
+
     @characters_to_decode.setter
     def characters_to_decode(self, value: List[str]):
         self._characters_to_decode = value
-        
+
     def get_key(self) -> str:
         return self.PARAMETERS_NAME_DECODING_HANDLER_OPTION_KEY

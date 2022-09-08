@@ -10,7 +10,6 @@ from .options import ParametersNameDecodingHandlerOption
 
 
 class ParametersNameDecodingHandler(BaseMiddleware):
-
     def __init__(
         self,
         options: ParametersNameDecodingHandlerOption = ParametersNameDecodingHandlerOption(),
@@ -26,7 +25,9 @@ class ParametersNameDecodingHandler(BaseMiddleware):
         super().__init__()
         self.options = options
 
-    async def send(self, request: httpx.Request, transport: httpx.AsyncBaseTransport) -> httpx.Response:  #type: ignore
+    async def send(
+        self, request: httpx.Request, transport: httpx.AsyncBaseTransport
+    ) -> httpx.Response:  #type: ignore
         """To execute the current middleware
 
         Args:

@@ -5,12 +5,12 @@ import httpx
 from kiota_abstractions.request_option import RequestOption
 from urllib3 import PoolManager
 
+
 class MiddlewarePipeline():
     """MiddlewarePipeline, entry point of middleware
     The pipeline is implemented as a linked-list, read more about
     it here https://buffered.dev/middleware-python-requests/
     """
-
     def __init__(self, transport: httpx.AsyncBaseTransport):
         super().__init__()
         self._current_middleware = None
@@ -43,7 +43,6 @@ class BaseMiddleware():
     """Base class for middleware. Handles moving a Request to the next middleware in the pipeline.
     If the current middleware is the last one in the pipeline, it makes a network request
     """
-
     def __init__(self):
         self.next = None
 

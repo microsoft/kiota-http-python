@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 from typing import Dict, Optional
 
 from .kiota_client_factory import KiotaClientFactory

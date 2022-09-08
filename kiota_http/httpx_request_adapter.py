@@ -1,7 +1,7 @@
-import httpx
 from datetime import datetime
 from typing import TYPE_CHECKING, Callable, Dict, List, Optional, TypeVar
 
+import httpx
 from kiota_abstractions.api_client_builder import (
     enable_backing_store_for_parse_node_factory,
     enable_backing_store_for_serialization_writer_factory,
@@ -29,7 +29,6 @@ ModelType = TypeVar("ModelType", bound=Parsable)
 
 
 class HttpxRequestAdapter(RequestAdapter):
-
     def __init__(
         self,
         authentication_provider: AuthenticationProvider,
@@ -50,7 +49,7 @@ class HttpxRequestAdapter(RequestAdapter):
         self._serialization_writer_factory = serialization_writer_factory
         if not http_client:
             raise TypeError("Http Client cannot be null")
-        
+
         self._http_client = http_client.client
 
         self._base_url: str = ''
@@ -115,7 +114,7 @@ class HttpxRequestAdapter(RequestAdapter):
 
         if response_handler:
             return await response_handler.handle_response_async(response, error_map)
-        
+
         await self.throw_failed_responses(response, error_map)
         if self._should_return_none(response):
             return None
@@ -310,9 +309,7 @@ class HttpxRequestAdapter(RequestAdapter):
             raise error
         raise APIError(f"Unexpected error type: {type(error)}")
 
-    async def get_http_response_message(
-        self, request_info: RequestInformation
-    ) -> httpx.Response:
+    async def get_http_response_message(self, request_info: RequestInformation) -> httpx.Response:
         if not request_info:
             raise Exception("Request info cannot be null")
 
@@ -320,14 +317,15 @@ class HttpxRequestAdapter(RequestAdapter):
         await self._authentication_provider.authenticate_request(request_info)
 
         request = self.get_request_from_request_information(request_info)
-        
+
         # Pass request options in the headers as send method does not support.
         # The header will be removed by the last middleware before the request is sent.
         request.headers["request_options"] = str(request_info.request_options)
-        
+
         resp = await self._http_client.send(request)
         await self._http_client.aclose()
         return resp
+
     def set_base_url_for_request_information(self, request_info: RequestInformation) -> None:
         request_info.path_parameters["baseurl"] = self.base_url
 

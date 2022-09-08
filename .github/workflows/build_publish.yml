@@ -33,7 +33,7 @@ jobs:
           pipenv run isort kiota_http
       - name: Lint with Pylint
         run: |
-          pipenv run pylint kiota_htp --disable=W --rcfile=.pylintrc
+          pipenv run pylint kiota_http --disable=W --rcfile=.pylintrc
       - name: Static type checking with Mypy
         run: |
           pipenv run mypy kiota_http

@@ -1,9 +1,11 @@
 import datetime
-import httpx
 import random
 import time
 from email.utils import parsedate_to_datetime
 from typing import FrozenSet, Set
+
+import httpx
+from requests import options
 
 from .middleware import BaseMiddleware
 from .options import RetryHandlerOption
@@ -38,18 +40,18 @@ class RetryHandler(BaseMiddleware):
         response will be immediately returned, else the request retry continues.
     """
     DEFAULT_BACKOFF_FACTOR: float = 0.5
-    
+
     MAXIMUM_BACKOFF: int = 120
-    
+
     # A list of status codes that needs to be retried
-    # 429 - Too many requests 
+    # 429 - Too many requests
     # 503 - Service unavailable
     # 504 - Gateway timeout
     DEFAULT_RETRY_STATUS_CODES: Set[int] = {429, 503, 504}
-    
+
     DEFAULT_ALLOWED_METHODS: FrozenSet[str] = frozenset(
-            ['HEAD', 'GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS']
-        )
+        ['HEAD', 'GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS']
+    )
 
     def __init__(self, options: RetryHandlerOption = RetryHandlerOption()) -> None:
         super().__init__()
@@ -59,6 +61,7 @@ class RetryHandler(BaseMiddleware):
         self.timeout: float = options.max_delay
         self.retry_on_status_codes: Set[int] = self.DEFAULT_RETRY_STATUS_CODES
         self.allowed_methods: FrozenSet[str] = self.DEFAULT_ALLOWED_METHODS
+        self.retries_allowed: bool = options.should_retry
         self.respect_retry_after_header: bool = options.DEFAULT_SHOULD_RETRY
 
     async def send(self, request: httpx.Request, transport: httpx.AsyncBaseTransport):
@@ -67,7 +70,7 @@ class RetryHandler(BaseMiddleware):
         """
         response = None
         retry_count = 0
-        retry_valid = True
+        retry_valid = self.retries_allowed
 
         while retry_valid:
             start_time = time.time()

@@ -1,14 +1,21 @@
-# Project
+# Microsoft Kiota HTTP library
+[![PyPI version](https://badge.fury.io/py/microsoft-kiota-http.svg)](https://badge.fury.io/py/microsoft-kiota-http)
+[![CI Actions Status](https://github.com/microsoft/kiota-http-python/actions/workflows/build_publish.yml/badge.svg?branch=main)](https://github.com/microsoft/kiota-http-python/actions)
+[![Downloads](https://pepy.tech/badge/microsoft-kiota-http)](https://pepy.tech/project/microsoft-kiota-http)
 
-> This repo has been populated by an initial template to help get you started. Please
-> make sure to update the content to build a great experience for community-building.
+The Microsoft Kiota HTTP Library is a python HTTP implementation with HTTPX library.
 
-As the maintainer of this project, please make a few updates:
+A [Kiota](https://github.com/microsoft/kiota) generated project will need a reference to a http package to to make HTTP requests to an API endpoint.
 
-- Improving this README.MD file to provide a great experience
-- Updating SUPPORT.MD with content about this project's support experience
-- Understanding the security reporting process in SECURITY.MD
-- Remove this section from the README
+Read more about Kiota [here](https://github.com/microsoft/kiota/blob/main/README.md).
+
+## Using the Microsoft Kiota HTTP library
+
+In order to use this library, install the package by running:
+
+```cmd
+pip install microsoft-kiota-http
+```
 
 ## Contributing
 

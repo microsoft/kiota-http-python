@@ -4,7 +4,7 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-microsoft-kiota-abstractions = "==0.1.0"
+microsoft-kiota-abstractions = "*"
 httpx = {version = "==0.23.0", extras = ["http2"]}
 
 [dev-packages]
@@ -19,6 +19,5 @@ types-python-dateutil = "*"
 toml = "==0.10.2"
 pytest-asyncio = "==0.19.0"
 pytest-mock = "==3.8.2"
-responses = "==0.21.0"
-types-requests = "*"
-microsoft-kiota-serialization-json = "==0.1.0"
+asyncmock = "==0.4.2"
+microsoft-kiota-serialization-json = "*"

@@ -1,9 +1,7 @@
 import json
-from typing import Dict
 from urllib.parse import unquote
 
 import httpx
-from kiota_abstractions.request_option import RequestOption
 
 from .middleware import BaseMiddleware
 from .options import ParametersNameDecodingHandlerOption

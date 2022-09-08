@@ -5,7 +5,6 @@ from email.utils import parsedate_to_datetime
 from typing import FrozenSet, Set
 
 import httpx
-from requests import options
 
 from .middleware import BaseMiddleware
 from .options import RetryHandlerOption

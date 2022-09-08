@@ -1,5 +1,3 @@
-from typing import Set
-
 from kiota_abstractions.request_option import RequestOption
 
 

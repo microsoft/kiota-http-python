@@ -1,5 +1,4 @@
 from typing import List, Set, Union
-from urllib.parse import urlparse
 
 import httpx
 

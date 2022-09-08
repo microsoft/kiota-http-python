@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import TYPE_CHECKING, Callable, Dict, List, Optional, TypeVar
+from typing import Dict, List, Optional, TypeVar
 
 import httpx
 from kiota_abstractions.api_client_builder import (

@@ -1,5 +1,4 @@
 import ssl
-from typing import Optional
 
 import httpx
 from kiota_abstractions.request_option import RequestOption

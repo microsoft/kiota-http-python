@@ -1,0 +1,23 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+microsoft-kiota-abstractions = "*"
+httpx = {version = "==0.23.0", extras = ["http2"]}
+
+[dev-packages]
+flit = "==3.7.1"
+pylint = "==2.14.5"
+mypy = "==0.971"
+yapf = "==0.31.0"
+isort = "==5.10.1"
+pytest = "==7.1.2"
+pytest-cov = "==3.0.0"
+types-python-dateutil = "*"
+toml = "==0.10.2"
+pytest-asyncio = "==0.19.0"
+pytest-mock = "==3.8.2"
+asyncmock = "==0.4.2"
+microsoft-kiota-serialization-json = "*"

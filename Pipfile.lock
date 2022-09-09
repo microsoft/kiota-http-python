@@ -339,11 +339,11 @@
         },
         "microsoft-kiota-serialization-json": {
             "hashes": [
-                "sha256:caccccc02618562ea71a2944901946a874b439afdf35c55d7c81833beb28dc41",
-                "sha256:ec9a0d3b18a9307cae9cb5b19340a6d16fd441abdbb90d89bb06e221fd1eaf54"
+                "sha256:4146626df200ad5a2d8223776bafa7eb91bbb455bb95ec9956ee85c23191d517",
+                "sha256:df25fe108f1e0caec4064acf854c5f98cc3f3fade848e88e82e744cda512dfc2"
             ],
             "index": "pypi",
-            "version": "==0.1.0"
+            "version": "==0.2.0"
         },
         "mock": {
             "hashes": [
@@ -482,7 +482,7 @@
                 "sha256:7c5599b102feddaa661c826c56ab4fee28bfd17f5abca1ebbe3e7f19d7c97983",
                 "sha256:8fefa2a1a1365bf5520aac41836fbee479da67864514bdb821f31ce07ce65349"
             ],
-            "markers": "python_version >= '3.7' and python_version < '4.0'",
+            "markers": "python_version >= '3.7' and python_version < '4'",
             "version": "==2.28.1"
         },
         "six": {
@@ -522,7 +522,7 @@
                 "sha256:25d4e2e446c453be6360c67ddfb88838cfc42026322770ba13d1fbd403a93a5c",
                 "sha256:3235a9010fae54323e727c3ac06fb720752fe6635b3426e379daec60fbd44a83"
             ],
-            "markers": "python_version >= '3.6' and python_version < '4.0'",
+            "markers": "python_version >= '3.6' and python_version < '4'",
             "version": "==0.11.4"
         },
         "types-python-dateutil": {
@@ -554,7 +554,7 @@
                 "sha256:3fa96cf423e6987997fc326ae8df396db2a8b7c667747d47ddd8ecba91f4a74e",
                 "sha256:b930dd878d5a8afb066a637fbb35144fe7901e3b209d1cd4f524bd0e9deee997"
             ],
-            "markers": "python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2, 3.3, 3.4, 3.5' and python_version < '4.0'",
+            "markers": "python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2, 3.3, 3.4, 3.5' and python_version < '4'",
             "version": "==1.26.12"
         },
         "wrapt": {

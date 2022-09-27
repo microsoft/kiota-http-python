@@ -10,7 +10,7 @@ httpx = {version = "==0.23.0", extras = ["http2"]}
 [dev-packages]
 flit = "==3.7.1"
 pylint = "==2.15.2"
-mypy = "==0.971"
+mypy = "==0.981"
 yapf = "==0.32.0"
 isort = "==5.10.1"
 pytest = "==7.1.3"

@@ -1,19 +1,9 @@
-from unittest.mock import Mock
-from urllib import response
-
 import httpx
 import pytest
 from asyncmock import AsyncMock
-from kiota_abstractions.authentication import AnonymousAuthenticationProvider
 from kiota_abstractions.method import Method
-from kiota_abstractions.request_information import RequestInformation
 from kiota_abstractions.serialization import (
-    Parsable,
-    ParsableFactory,
-    ParseNode,
-    ParseNodeFactory,
     ParseNodeFactoryRegistry,
-    SerializationWriterFactory,
     SerializationWriterFactoryRegistry,
 )
 

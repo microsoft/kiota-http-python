@@ -339,11 +339,11 @@
         },
         "microsoft-kiota-serialization-json": {
             "hashes": [
-                "sha256:caccccc02618562ea71a2944901946a874b439afdf35c55d7c81833beb28dc41",
-                "sha256:ec9a0d3b18a9307cae9cb5b19340a6d16fd441abdbb90d89bb06e221fd1eaf54"
+                "sha256:4146626df200ad5a2d8223776bafa7eb91bbb455bb95ec9956ee85c23191d517",
+                "sha256:df25fe108f1e0caec4064acf854c5f98cc3f3fade848e88e82e744cda512dfc2"
             ],
             "index": "pypi",
-            "version": "==0.1.0"
+            "version": "==0.2.0"
         },
         "mock": {
             "hashes": [
@@ -507,7 +507,7 @@
                 "sha256:939de3e7a6161af0c887ef91b7d41a53e7c5a1ca976325f429cb46ea9bc30ecc",
                 "sha256:de526c12914f0c550d15924c62d72abc48d6fe7364aa87328337a31007fe8a4f"
             ],
-            "markers": "python_version >= '3.7'",
+            "markers": "python_version < '3.11'",
             "version": "==2.0.1"
         },
         "tomli-w": {

@@ -311,9 +311,6 @@ class HttpxRequestAdapter(RequestAdapter):
         raise APIError(f"Unexpected error type: {type(error)}")
 
     async def get_http_response_message(self, request_info: RequestInformation) -> httpx.Response:
-        if not request_info:
-            raise Exception("Request info cannot be null")
-
         self.set_base_url_for_request_information(request_info)
         await self._authentication_provider.authenticate_request(request_info)
 

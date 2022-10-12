@@ -6,6 +6,7 @@ from typing import Any, Callable, Dict, List, Optional, TypeVar
 from kiota_abstractions.serialization import (
     AdditionalDataHolder,
     Parsable,
+    ParsableFactory,
     ParseNode,
     SerializationWriter,
 )
@@ -15,7 +16,8 @@ from .office_location import OfficeLocation
 T = TypeVar('T')
 
 
-class User(Parsable, AdditionalDataHolder):
+class MockResponseObject(Parsable, AdditionalDataHolder):
+
     def __init__(self) -> None:
         self._id: Optional[str] = None
         self._display_name: Optional[str] = None
@@ -117,8 +119,22 @@ class User(Parsable, AdditionalDataHolder):
     def additional_data(self, data: Dict[str, Any]) -> None:
         self._additional_data = data
 
+    def get_object_value(self, model_class):
+        return self
+
+    def get_collection_of_object_values(self, model_class):
+        return [self, self]
+
+    def get_collection_of_primitive_values(self, primitive_type):
+        return [12.1, 12.2, 12.3, 12.4, 12.5]
+
+    def get_float_value(self):
+        return 22.3
+
     @staticmethod
-    def create_from_discriminator_value(parse_node: Optional[ParseNode] = None) -> User:
+    def create_from_discriminator_value(
+        parse_node: Optional[ParseNode] = None
+    ) -> MockResponseObject:
         """
         Creates a new instance of the appropriate class based on discriminator value
         Args:
@@ -127,7 +143,7 @@ class User(Parsable, AdditionalDataHolder):
         """
         if not parse_node:
             raise Exception("parse_node cannot be undefined")
-        return User()
+        return MockResponseObject()
 
     def get_field_deserializers(self) -> Dict[str, Callable[[ParseNode], None]]:
         """Gets the deserialization information for this object.
@@ -136,28 +152,7 @@ class User(Parsable, AdditionalDataHolder):
             Dict[str, Callable[[ParseNode], None]]: The deserialization information for this
             object where each entry is a property key with its deserialization callback.
         """
-        return {
-            "id":
-            lambda n: setattr(self, 'id', n.get_uuid_value()),
-            "display_name":
-            lambda n: setattr(self, 'display_name', n.get_str_value()),
-            "office_location":
-            lambda n: setattr(self, 'office_location', n.get_enum_value(OfficeLocation)),
-            "updated_at":
-            lambda n: setattr(self, 'updated_at', n.get_datetime_value()),
-            "birthday":
-            lambda n: setattr(self, 'birthday', n.get_date_value()),
-            "business_phones":
-            lambda n: setattr(self, 'business_phones', n.get_collection_of_primitive_values(str)),
-            "mobile_phone":
-            lambda n: setattr(self, 'mobile_phone', n.get_str_value()),
-            "is_active":
-            lambda n: setattr(self, 'is_active', n.get_bool_value()),
-            "age":
-            lambda n: setattr(self, 'age', n.get_int_value()),
-            "gpa":
-            lambda n: setattr(self, 'gpa', n.get_float_value())
-        }
+        pass
 
     def serialize(self, writer: SerializationWriter) -> None:
         """Writes the objects properties to the current writer.
@@ -165,15 +160,4 @@ class User(Parsable, AdditionalDataHolder):
         Args:
             writer (SerializationWriter): The writer to write to.
         """
-        if not writer:
-            raise Exception("Writer cannot be undefined")
-        writer.write_uuid_value("id", self.id)
-        writer.write_str_value("display_name", self.display_name)
-        writer.write_enum_value("office_location", self.office_location)
-        writer.write_datetime_value("updated_at", self.updated_at)
-        writer.write_date_value("birthday", self.birthday)
-        writer.write_collection_of_primitive_values("business_phones", self.business_phones)
-        writer.write_str_value("mobile_phone", self.mobile_phone)
-        writer.write_bool_value("is_active", self.is_active)
-        writer.write_int_value("age", self.age)
-        writer.write_float_value("gpa", self.gpa)
+        pass

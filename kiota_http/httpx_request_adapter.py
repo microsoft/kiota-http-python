@@ -29,6 +29,7 @@ ModelType = TypeVar("ModelType", bound=Parsable)
 
 
 class HttpxRequestAdapter(RequestAdapter):
+
     def __init__(
         self,
         authentication_provider: AuthenticationProvider,

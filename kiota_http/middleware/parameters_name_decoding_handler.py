@@ -8,6 +8,7 @@ from .options import ParametersNameDecodingHandlerOption
 
 
 class ParametersNameDecodingHandler(BaseMiddleware):
+
     def __init__(
         self,
         options: ParametersNameDecodingHandlerOption = ParametersNameDecodingHandlerOption(),

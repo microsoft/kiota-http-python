@@ -6,6 +6,7 @@ from .middleware import MiddlewarePipeline
 class AsyncKiotaTransport(httpx.AsyncBaseTransport):
     """A custom transport that implements Kiota middleware functionality
     """
+
     def __init__(self, transport: httpx.AsyncBaseTransport, middleware: MiddlewarePipeline) -> None:
         self.transport = transport
         self.middleware = middleware

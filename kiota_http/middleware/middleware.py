@@ -50,7 +50,6 @@ class BaseMiddleware():
     async def send(self, request, transport):
         if self.next is None:
             # Remove request options. No longer needed.
-            print(request.headers)
             del request.headers['request_options']
             return await transport.handle_async_request(request)
         return await self.next.send(request, transport)

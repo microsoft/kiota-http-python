@@ -1,4 +1,5 @@
 import ssl
+from urllib import response
 
 import httpx
 from kiota_abstractions.request_option import RequestOption
@@ -50,7 +51,9 @@ class BaseMiddleware():
     async def send(self, request, transport):
         if self.next is None:
             # Remove request options. No longer needed.
-            print(request.headers)
-            del request.headers['request_options']
-            return await transport.handle_async_request(request)
+            if 'request_options' in request.headers:
+                del request.headers['request_options']
+            response = await transport.handle_async_request(request)
+            response.request = request
+            return response
         return await self.next.send(request, transport)

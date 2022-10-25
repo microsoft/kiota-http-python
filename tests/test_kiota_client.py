@@ -1,7 +1,7 @@
 import httpx
 import pytest
 
-from kiota_http import KiotaClient
+from kiota_http.kiota_client import KiotaClient
 
 
 def test_create_client():

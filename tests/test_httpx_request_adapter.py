@@ -10,7 +10,7 @@ from kiota_serialization_json.json_serialization_writer_factory import (
     JsonSerializationWriterFactory,
 )
 
-from kiota_http import HttpxRequestAdapter
+from kiota_http.httpx_request_adapter import HttpxRequestAdapter
 
 from .helpers import OfficeLocation, User
 

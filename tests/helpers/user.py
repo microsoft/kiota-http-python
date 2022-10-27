@@ -16,6 +16,7 @@ T = TypeVar('T')
 
 
 class User(Parsable, AdditionalDataHolder):
+
     def __init__(self) -> None:
         self._id: Optional[str] = None
         self._display_name: Optional[str] = None
@@ -27,7 +28,7 @@ class User(Parsable, AdditionalDataHolder):
         self._is_active: Optional[bool] = None
         self._age: Optional[int] = None
         self._gpa: Optional[float] = None
-        self._additional_data: Optional[Dict[str, Any]] = {}
+        self._additional_data: Dict[str, Any] = {}
 
     @property
     def id(self):

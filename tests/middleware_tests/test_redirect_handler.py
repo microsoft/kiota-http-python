@@ -71,9 +71,3 @@ def test_is_not_https_redirect(mock_redirect_handler):
     url = httpx.URL("http://example.com")
     location = httpx.URL("https://www.example.com")
     assert not mock_redirect_handler.is_https_redirect(url, location)
-
-
-def test_is_not_https_redirect_if_not_default_ports(mock_redirect_handler):
-    url = httpx.URL("http://example.com:9999")
-    location = httpx.URL("https://example.com:1337")
-    assert not mock_redirect_handler.is_https_redirect(url, location)

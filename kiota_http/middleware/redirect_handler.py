@@ -186,10 +186,7 @@ class RedirectHandler(BaseMiddleware):
         """
         Return 'True' if the given URLs share the same origin.
         """
-        return (
-            url.scheme == other.scheme and url.host == other.host
-            and self.port_or_default(url) == self.port_or_default(other)
-        )
+        return (url.scheme == other.scheme and url.host == other.host)
 
     def port_or_default(self, url: httpx.URL) -> typing.Optional[int]:
         if url.port is not None:
@@ -203,7 +200,4 @@ class RedirectHandler(BaseMiddleware):
         if url.host != location.host:
             return False
 
-        return (
-            url.scheme == "http" and self.port_or_default(url) == 80 and location.scheme == "https"
-            and self.port_or_default(location) == 443
-        )
+        return (url.scheme == "http" and location.scheme == "https")

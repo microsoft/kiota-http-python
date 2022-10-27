@@ -7,7 +7,7 @@ from kiota_abstractions.serialization import (
     SerializationWriterFactoryRegistry,
 )
 
-from kiota_http import HttpxRequestAdapter
+from kiota_http.httpx_request_adapter import HttpxRequestAdapter
 
 from .helpers import MockResponseObject
 

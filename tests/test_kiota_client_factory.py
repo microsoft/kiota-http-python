@@ -1,7 +1,7 @@
 import httpx
 import pytest
 
-from kiota_http import KiotaClientFactory
+from kiota_http.kiota_client_factory import KiotaClientFactory
 from kiota_http.middleware import AsyncKiotaTransport, MiddlewarePipeline
 
 

@@ -8,6 +8,11 @@ BASE_URL = 'https://httpbin.org'
 REDIRECT_URL = "https://graph.microsoft.com"
 
 
+@pytest.fixture
+def mock_redirect_handler():
+    return RedirectHandler()
+
+
 def test_no_config():
     """
     Test that default values are used if no custom confguration is passed
@@ -42,3 +47,33 @@ def test_increment_redirects():
 
     handler = RedirectHandler()
     assert handler.increment(response)
+
+
+def test_same_origin(mock_redirect_handler):
+    origin1 = httpx.URL("https://example.com")
+    origin2 = httpx.URL("HTTPS://EXAMPLE.COM:443")
+    assert mock_redirect_handler._same_origin(origin1, origin2)
+
+
+def test_not_same_origin(mock_redirect_handler):
+    origin1 = httpx.URL("https://example.com")
+    origin2 = httpx.URL("HTTP://EXAMPLE.COM")
+    assert not mock_redirect_handler._same_origin(origin1, origin2)
+
+
+def test_is_https_redirect(mock_redirect_handler):
+    url = httpx.URL("http://example.com")
+    location = httpx.URL("https://example.com")
+    assert mock_redirect_handler.is_https_redirect(url, location)
+
+
+def test_is_not_https_redirect(mock_redirect_handler):
+    url = httpx.URL("http://example.com")
+    location = httpx.URL("https://www.example.com")
+    assert not mock_redirect_handler.is_https_redirect(url, location)
+
+
+def test_is_not_https_redirect_if_not_default_ports(mock_redirect_handler):
+    url = httpx.URL("http://example.com:9999")
+    location = httpx.URL("https://example.com:1337")
+    assert not mock_redirect_handler.is_https_redirect(url, location)

@@ -20,6 +20,16 @@ DEFAULT_REQUEST_TIMEOUT: int = 100
 class KiotaClientFactory:
 
     @staticmethod
+    def get_default_client() -> httpx.AsyncClient:
+        """Returns a native HTTP AsyncClient(httpx.AsyncClient) instance with default options
+
+        Returns:
+            httpx.AsyncClient
+        """
+        timeout = httpx.Timeout(DEFAULT_REQUEST_TIMEOUT, connect=DEFAULT_CONNECTION_TIMEOUT)
+        return httpx.AsyncClient(timeout=timeout, http2=True)
+
+    @staticmethod
     def create_with_default_middleware() -> httpx.AsyncClient:
         """Constructs native HTTP AsyncClient(httpx.AsyncClient) instances configured with
         a custom transport loaded with a default pipeline of middleware.
@@ -27,11 +37,11 @@ class KiotaClientFactory:
         Returns:
             httpx.AsycClient: An instance of the AsyncClient object
         """
-        timeout = httpx.Timeout(DEFAULT_REQUEST_TIMEOUT, connect=DEFAULT_CONNECTION_TIMEOUT)
-        kiota_async_client = httpx.AsyncClient(timeout=timeout, http2=True)
+
+        kiota_async_client = KiotaClientFactory.get_default_client()
         current_transport = kiota_async_client._transport
-        middleware = KiotaClientFactory._get_default_middleware()
-        middleware_pipeline = KiotaClientFactory._create_middleware_pipeline(
+        middleware = KiotaClientFactory.get_default_middleware()
+        middleware_pipeline = KiotaClientFactory.create_middleware_pipeline(
             middleware, current_transport
         )
 
@@ -41,7 +51,30 @@ class KiotaClientFactory:
         return kiota_async_client
 
     @staticmethod
-    def _get_default_middleware() -> List[BaseMiddleware]:
+    def create_with_custom_middleware(
+        middleware: Optional[List[BaseMiddleware]],
+    ) -> httpx.AsyncClient:
+        """Constructs native HTTP AsyncClient(httpx.AsyncClient) instances configured with
+        a custom pipeline of middleware.
+
+        Args:
+            middleware(List[BaseMiddleware]): Custom middleware list that will be used to create
+            a middleware pipeline. The middleware should be arranged in the order in which they will
+            modify the request.
+        """
+        kiota_async_client = KiotaClientFactory.get_default_client()
+        current_transport = kiota_async_client._transport
+        middleware_pipeline = KiotaClientFactory.create_middleware_pipeline(
+            middleware, current_transport
+        )
+
+        kiota_async_client._transport = AsyncKiotaTransport(
+            transport=current_transport, pipeline=middleware_pipeline
+        )
+        return kiota_async_client
+
+    @staticmethod
+    def get_default_middleware() -> List[BaseMiddleware]:
         """
         Helper method that returns a list of default middleware
         """
@@ -50,7 +83,7 @@ class KiotaClientFactory:
         return middleware
 
     @staticmethod
-    def _create_middleware_pipeline(
+    def create_middleware_pipeline(
         middleware: Optional[List[BaseMiddleware]], transport: httpx.AsyncBaseTransport
     ) -> MiddlewarePipeline:
         """

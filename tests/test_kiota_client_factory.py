@@ -18,10 +18,22 @@ def test_create_with_default_middleware():
 
     assert isinstance(client, httpx.AsyncClient)
     assert isinstance(client._transport, AsyncKiotaTransport)
+    
+def test_create_with_custom_middleware():
+    """Test creation of HTTP Clients with custom middleware"""
+    middleware = [
+        RetryHandler(),
+    ]
+    client = KiotaClientFactory.create_with_custom_middleware(middleware=middleware)
+
+    assert isinstance(client, httpx.AsyncClient)
+    assert isinstance(client._transport, AsyncKiotaTransport)
+    pipeline = client._transport.pipeline
+    assert isinstance(pipeline._first_middleware, RetryHandler)
 
 
 def test_get_default_middleware():
-    middleware = KiotaClientFactory._get_default_middleware()
+    middleware = KiotaClientFactory.get_default_middleware()
 
     assert len(middleware) == 3
     assert isinstance(middleware[0], RedirectHandler)
@@ -31,8 +43,8 @@ def test_get_default_middleware():
 
 def test_create_middleware_pipeline():
 
-    middleware = KiotaClientFactory._get_default_middleware()
-    pipeline = KiotaClientFactory._create_middleware_pipeline(
+    middleware = KiotaClientFactory.get_default_middleware()
+    pipeline = KiotaClientFactory.create_middleware_pipeline(
         middleware,
         httpx.AsyncClient()._transport
     )

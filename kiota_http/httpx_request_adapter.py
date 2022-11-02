@@ -22,7 +22,7 @@ from kiota_abstractions.serialization import (
 )
 from kiota_abstractions.store import BackingStoreFactory, BackingStoreFactorySingleton
 
-from .kiota_client import KiotaClient
+from .kiota_client_factory import KiotaClientFactory
 
 ResponseType = TypeVar("ResponseType", str, int, float, bool, datetime, bytes)
 ModelType = TypeVar("ModelType", bound=Parsable)
@@ -36,7 +36,7 @@ class HttpxRequestAdapter(RequestAdapter):
         parse_node_factory: ParseNodeFactory = ParseNodeFactoryRegistry(),
         serialization_writer_factory:
         SerializationWriterFactory = SerializationWriterFactoryRegistry(),
-        http_client: KiotaClient = KiotaClient()
+        http_client: httpx.AsyncClient = KiotaClientFactory.create_with_default_middleware()
     ) -> None:
 
         if not authentication_provider:
@@ -51,7 +51,7 @@ class HttpxRequestAdapter(RequestAdapter):
         if not http_client:
             raise TypeError("Http Client cannot be null")
 
-        self._http_client = http_client.client
+        self._http_client = http_client
 
         self._base_url: str = ''
 

@@ -66,8 +66,11 @@ class RedirectHandler(BaseMiddleware):
             redirect_location = self.get_redirect_location(response)
             if redirect_location and self.should_redirect:
                 retryable = self.increment(response)
-                request = response.next_request
+                new_request = self._build_redirect_request(request, response)
+                request = new_request
                 continue
+
+            response.history = self.history
             return response
 
         raise Exception(f"Too many redirects. {response.history}")

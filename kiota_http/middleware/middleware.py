@@ -1,8 +1,6 @@
 import ssl
-from urllib import response
 
 import httpx
-from kiota_abstractions.request_option import RequestOption
 from urllib3 import PoolManager
 
 

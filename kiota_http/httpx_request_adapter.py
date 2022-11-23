@@ -296,7 +296,7 @@ class HttpxRequestAdapter(RequestAdapter):
             )
 
         error_class = None
-        if error_map[status_code_str]:
+        if status_code_str in error_map:
             error_class = error_map[status_code_str]
         if 400 <= status_code < 500:
             error_class = error_map['4XX']

@@ -18,7 +18,8 @@ def test_create_with_default_middleware():
 
     assert isinstance(client, httpx.AsyncClient)
     assert isinstance(client._transport, AsyncKiotaTransport)
-    
+
+
 def test_create_with_custom_middleware():
     """Test creation of HTTP Clients with custom middleware"""
     middleware = [

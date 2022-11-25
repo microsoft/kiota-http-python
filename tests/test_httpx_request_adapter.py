@@ -62,6 +62,15 @@ def test_get_request_from_request_information(request_adapter, request_info):
     assert isinstance(req, httpx.Request)
 
 
+# get_request_from_request_information should set query parameters on req
+def test_get_request_from_request_information_with_query_params(request_adapter, request_info):
+    request_info.http_method = Method.GET
+    request_info.url = BASE_URL
+    request_info.query_parameters = {"top": 100}
+    req = request_adapter.get_request_from_request_information(request_info)
+    assert isinstance(req, httpx.Request)
+    assert req.url.query == b'top=100'
+
 def test_enable_backing_store(request_adapter):
     request_adapter.enable_backing_store(None)
     assert request_adapter._parse_node_factory

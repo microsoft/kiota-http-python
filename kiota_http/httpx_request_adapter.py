@@ -334,6 +334,7 @@ class HttpxRequestAdapter(RequestAdapter):
             method=request_info.http_method.value,
             url=request_info.url,
             headers=request_info.request_headers,
+            params=request_info.query_parameters,
             content=request_info.content,
         )
         return request

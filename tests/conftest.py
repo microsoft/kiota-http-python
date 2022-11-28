@@ -1,3 +1,5 @@
+from dataclasses import dataclass
+
 import httpx
 import pytest
 from asyncmock import AsyncMock
@@ -6,7 +8,7 @@ from kiota_abstractions.request_information import RequestInformation
 
 from kiota_http.httpx_request_adapter import HttpxRequestAdapter
 
-from .helpers import MockResponseObject, OfficeLocation
+from .helpers import MockErrorObject, MockResponseObject, OfficeLocation
 
 
 @pytest.fixture
@@ -28,6 +30,18 @@ def request_info_mock():
 def request_adapter(auth_provider):
     adapter = HttpxRequestAdapter(auth_provider)
     return adapter
+
+
+@pytest.fixture
+def mock_error_object():
+    return MockErrorObject
+
+
+@pytest.fixture
+def mock_error_map():
+    return {
+        "500": Exception("Internal Server Error"),
+    }
 
 
 @pytest.fixture

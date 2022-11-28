@@ -161,3 +161,10 @@ class MockResponseObject(Parsable, AdditionalDataHolder):
             writer (SerializationWriter): The writer to write to.
         """
         pass
+
+
+class MockErrorObject():
+
+    @staticmethod
+    def get_object_value(model_class):
+        return model_class

@@ -287,20 +287,26 @@ class HttpxRequestAdapter(RequestAdapter):
         status_code = response.status_code
         status_code_str = str(response.status_code)
 
-        if (not error_map or status_code_str
-            in error_map) and not (400 <= status_code < 500 and error_map['4XX']
-                                   ) and not (500 <= status_code < 600 and error_map['5XX']):
+        if not error_map:
             raise APIError(
                 "The server returned an unexpected status code and no error class is registered"
-                f"for this code {status_code}"
+                f" for this code {status_code}"
+            )
+        if (status_code_str not in error_map) and (
+            (400 <= status_code < 500 and '4XX' not in error_map) or
+            (500 <= status_code < 600 and '5XX' not in error_map)
+        ):
+            raise APIError(
+                "The server returned an unexpected status code and no error class is registered"
+                f" for this code {status_code}"
             )
 
         error_class = None
         if status_code_str in error_map:
             error_class = error_map[status_code_str]
-        if 400 <= status_code < 500:
+        elif 400 <= status_code < 500:
             error_class = error_map['4XX']
-        if 500 <= status_code < 600:
+        elif 500 <= status_code < 600:
             error_class = error_map['5XX']
 
         root_node = await self.get_root_parse_node(response)

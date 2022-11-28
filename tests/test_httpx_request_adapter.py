@@ -1,6 +1,7 @@
 import httpx
 import pytest
 from asyncmock import AsyncMock
+from kiota_abstractions.api_error import APIError
 from kiota_abstractions.method import Method
 from kiota_abstractions.serialization import (
     ParseNodeFactoryRegistry,
@@ -77,6 +78,54 @@ async def test_get_root_parse_node(request_adapter, simple_response):
 
     with pytest.raises(Exception) as e:
         await request_adapter.get_root_parse_node(simple_response)
+
+
+@pytest.mark.asyncio
+async def test_throw_failed_responses_null_error_map(request_adapter, simple_response):
+    assert simple_response.text == '{"error": "not found"}'
+    assert simple_response.status_code == 404
+    content_type = request_adapter.get_response_content_type(simple_response)
+    assert content_type == 'application/json'
+
+    with pytest.raises(
+        APIError,
+        match=
+        r"The server returned an unexpected status code and"\
+            " no error class is registered for this code 404"
+    ):
+        await request_adapter.throw_failed_responses(simple_response, None)
+
+
+@pytest.mark.asyncio
+async def test_throw_failed_responses_no_error_class(
+    request_adapter, simple_response, mock_error_map
+):
+    assert simple_response.text == '{"error": "not found"}'
+    assert simple_response.status_code == 404
+    content_type = request_adapter.get_response_content_type(simple_response)
+    assert content_type == 'application/json'
+
+    with pytest.raises(
+        APIError,
+        match=
+        r"The server returned an unexpected status code and"\
+        " no error class is registered for this code 404"
+    ):
+        await request_adapter.throw_failed_responses(simple_response, mock_error_map)
+
+
+@pytest.mark.asyncio
+async def test_throw_failed_responses_status_code_str_in_error_map(
+    request_adapter, mock_error_map, mock_error_object
+):
+    request_adapter.get_root_parse_node = AsyncMock(return_value=mock_error_object)
+    resp = httpx.Response(status_code=500, headers={"Content-Type": "application/json"})
+    assert resp.status_code == 500
+    content_type = request_adapter.get_response_content_type(resp)
+    assert content_type == 'application/json'
+
+    with pytest.raises(Exception, match=r"Internal Server Error"):
+        await request_adapter.throw_failed_responses(resp, mock_error_map)
 
 
 @pytest.mark.asyncio

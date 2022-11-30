@@ -327,7 +327,7 @@ class HttpxRequestAdapter(RequestAdapter):
         request.headers["request_options"] = str(request_info.request_options)
 
         resp = await self._http_client.send(request)
-        await self._http_client.aclose()
+        await resp.aclose()
         return resp
 
     def set_base_url_for_request_information(self, request_info: RequestInformation) -> None:

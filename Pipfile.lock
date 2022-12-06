@@ -90,11 +90,11 @@
         },
         "microsoft-kiota-abstractions": {
             "hashes": [
-                "sha256:2ca493d6c5269429cfbaebc7bf1d213b82bcd6d1e13bd93bdee2c8e0c731b263",
-                "sha256:657dc8e4f17842e45548432a5ee622644d5d91417b3f1396dfd04eb08734a153"
+                "sha256:6caac47824652e6a9cf76aeffd01423863354a58c493d4682a4dd70ea2cf889b",
+                "sha256:df6108898e37f15c4c42b6a2eaaf0207df2ede540ce127a2392a097d668e3cb4"
             ],
             "index": "pypi",
-            "version": "==0.2.0"
+            "version": "==0.2.1"
         },
         "rfc3986": {
             "extras": [

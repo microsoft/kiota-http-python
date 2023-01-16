@@ -10,7 +10,6 @@ from kiota_abstractions.api_error import APIError
 from kiota_abstractions.authentication import AuthenticationProvider
 from kiota_abstractions.request_adapter import RequestAdapter
 from kiota_abstractions.request_information import RequestInformation
-from kiota_abstractions.response_handler import ResponseHandler
 from kiota_abstractions.serialization import (
     Parsable,
     ParsableFactory,
@@ -22,7 +21,9 @@ from kiota_abstractions.serialization import (
 )
 from kiota_abstractions.store import BackingStoreFactory, BackingStoreFactorySingleton
 
+from .middleware.options import ResponseHandlerOption
 from .kiota_client_factory import KiotaClientFactory
+
 
 ResponseType = TypeVar("ResponseType", str, int, float, bool, datetime, bytes)
 ModelType = TypeVar("ModelType", bound=Parsable)
@@ -92,16 +93,13 @@ class HttpxRequestAdapter(RequestAdapter):
         return segments[0]
 
     async def send_async(
-        self, request_info: RequestInformation, model_type: ParsableFactory,
-        response_handler: Optional[ResponseHandler], error_map: Dict[str, ParsableFactory]
+        self, request_info: RequestInformation, model_type: ParsableFactory, error_map: Dict[str, ParsableFactory]
     ) -> Optional[ModelType]:
         """Excutes the HTTP request specified by the given RequestInformation and returns the
         deserialized response model.
         Args:
             request_info (RequestInformation): the request info to execute.
             type (ParsableFactory): the class of the response model to deserialize the response into
-            response_handler (Optional[ResponseHandler]): The response handler to use for the HTTP
-            request instead of the default handler.
             error_map (Dict[str, ParsableFactory]): the error dict to use in
             case of a failed request.
 
@@ -112,9 +110,10 @@ class HttpxRequestAdapter(RequestAdapter):
             raise TypeError("Request info cannot be null")
 
         response = await self.get_http_response_message(request_info)
-
+        
+        response_handler = self.get_response_handler(request_info)
         if response_handler:
-            return await response_handler.handle_response_async(response, error_map)
+            return await response_handler.handle_response_async(response)
 
         await self.throw_failed_responses(response, error_map)
         if self._should_return_none(response):
@@ -125,15 +124,13 @@ class HttpxRequestAdapter(RequestAdapter):
 
     async def send_collection_async(
         self, request_info: RequestInformation, model_type: ParsableFactory,
-        response_handler: Optional[ResponseHandler], error_map: Dict[str, ParsableFactory]
+        error_map: Dict[str, ParsableFactory]
     ) -> Optional[List[ModelType]]:
         """Excutes the HTTP request specified by the given RequestInformation and returns the
         deserialized response model collection.
         Args:
             request_info (RequestInformation): the request info to execute.
             type (ParsableFactory): the class of the response model to deserialize the response into
-            response_handler (Optional[ResponseHandler]): The response handler to use for the
-            HTTP request instead of the default handler.
             error_map (Dict[str, ParsableFactory]): the error dict to use in
             case of a failed request.
 
@@ -143,9 +140,10 @@ class HttpxRequestAdapter(RequestAdapter):
         if not request_info:
             raise TypeError("Request info cannot be null")
         response = await self.get_http_response_message(request_info)
-
+        
+        response_handler = self.get_response_handler(request_info)
         if response_handler:
-            return await response_handler.handle_response_async(response, error_map)
+            return await response_handler.handle_response_async(response)
 
         await self.throw_failed_responses(response, error_map)
         if self._should_return_none(response):
@@ -156,7 +154,7 @@ class HttpxRequestAdapter(RequestAdapter):
 
     async def send_collection_of_primitive_async(
         self, request_info: RequestInformation, response_type: ResponseType,
-        response_handler: Optional[ResponseHandler], error_map: Dict[str, ParsableFactory]
+        error_map: Dict[str, ParsableFactory]
     ) -> Optional[List[ResponseType]]:
         """Excutes the HTTP request specified by the given RequestInformation and returns the
         deserialized response model collection.
@@ -164,8 +162,6 @@ class HttpxRequestAdapter(RequestAdapter):
             request_info (RequestInformation): the request info to execute.
             response_type (ResponseType): the class of the response model to deserialize the
             response into.
-            response_handler (Optional[ResponseType]): The response handler to use for the HTTP
-            request instead of the default handler.
             error_map (Dict[str, ParsableFactory]): the error dict to use in
             case of a failed request.
 
@@ -176,9 +172,11 @@ class HttpxRequestAdapter(RequestAdapter):
             raise TypeError("Request info cannot be null")
 
         response = await self.get_http_response_message(request_info)
-
+        
+        response_handler = self.get_response_handler(request_info)
         if response_handler:
-            return await response_handler.handle_response_async(response, error_map)
+            return await response_handler.handle_response_async(response)
+
         await self.throw_failed_responses(response, error_map)
         if self._should_return_none(response):
             return None
@@ -187,7 +185,7 @@ class HttpxRequestAdapter(RequestAdapter):
 
     async def send_primitive_async(
         self, request_info: RequestInformation, response_type: ResponseType,
-        response_handler: Optional[ResponseHandler], error_map: Dict[str, ParsableFactory]
+        error_map: Dict[str, ParsableFactory]
     ) -> Optional[ResponseType]:
         """Excutes the HTTP request specified by the given RequestInformation and returns the
         deserialized primitive response model.
@@ -195,8 +193,6 @@ class HttpxRequestAdapter(RequestAdapter):
             request_info (RequestInformation): the request info to execute.
             response_type (ResponseType): the class of the response model to deserialize the
             response into.
-            response_handler (Optional[ResponseHandler]): The response handler to use for the
-            HTTP request instead of the default handler.
             error_map (Dict[str, ParsableFactory]): the error dict to use in case
             of a failed request.
 
@@ -207,9 +203,10 @@ class HttpxRequestAdapter(RequestAdapter):
             raise TypeError("Request info cannot be null")
 
         response = await self.get_http_response_message(request_info)
-
+        
+        response_handler = self.get_response_handler(request_info)
         if response_handler:
-            return await response_handler.handle_response_async(response, error_map)
+            return await response_handler.handle_response_async(response)
 
         await self.throw_failed_responses(response, error_map)
         if self._should_return_none(response):
@@ -230,15 +227,12 @@ class HttpxRequestAdapter(RequestAdapter):
         raise Exception("Found unexpected type to deserialize")
 
     async def send_no_response_content_async(
-        self, request_info: RequestInformation, response_handler: Optional[ResponseHandler],
-        error_map: Dict[str, ParsableFactory]
+        self, request_info: RequestInformation, error_map: Dict[str, ParsableFactory]
     ) -> None:
         """Excutes the HTTP request specified by the given RequestInformation and returns the
         deserialized primitive response model.
         Args:
             request_info (RequestInformation):the request info to execute.
-            response_handler (Optional[ResponseHandler]): The response handler to use for the
-            HTTP request instead of the default handler.
             error_map (Dict[str, ParsableFactory]): the error dict to use in case
             of a failed request.
         """
@@ -246,9 +240,11 @@ class HttpxRequestAdapter(RequestAdapter):
             raise TypeError("Request info cannot be null")
 
         response = await self.get_http_response_message(request_info)
-
+        
+        response_handler = self.get_response_handler(request_info)
         if response_handler:
-            return await response_handler.handle_response_async(response, error_map)
+            return await response_handler.handle_response_async(response)
+
         await self.throw_failed_responses(response, error_map)
 
     def enable_backing_store(self, backing_store_factory: Optional[BackingStoreFactory]) -> None:
@@ -328,7 +324,11 @@ class HttpxRequestAdapter(RequestAdapter):
 
         resp = await self._http_client.send(request)
         return resp
-
+    
+    def get_response_handler(request_info: RequestInformation) -> Any:
+        if request_info:
+            return request_info.headers.get(ResponseHandlerOption.get_key())
+            
     def set_base_url_for_request_information(self, request_info: RequestInformation) -> None:
         request_info.path_parameters["baseurl"] = self.base_url
 

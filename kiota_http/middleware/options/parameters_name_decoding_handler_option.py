@@ -7,7 +7,7 @@ class ParametersNameDecodingHandlerOption(RequestOption):
     """Config options for the ParametersNameDecodingHandler
     """
 
-    PARAMETERS_NAME_DECODING_HANDLER_OPTION_KEY = "ParametersNameDecodingHandlerOptionKey"
+    PARAMETERS_NAME_DECODING_HANDLER_OPTION_KEY = "ParametersNameDecodingHandlerOption"
 
     def __init__(
         self, enable: bool = True, characters_to_decode: List[str] = [".", "-", "~", "$"]

@@ -22,7 +22,7 @@ class RetryHandlerOption(RequestOption):
     # Default value for should retry
     DEFAULT_SHOULD_RETRY: bool = True
 
-    RETRY_HANDLER_OPTION_KEY = 'RetryHandlerOptionKey'
+    RETRY_HANDLER_OPTION_KEY = 'RetryHandlerOption'
 
     def __init__(
         self,

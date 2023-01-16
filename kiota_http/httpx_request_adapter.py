@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Dict, List, Optional, TypeVar
+from typing import Any, Dict, List, Optional, TypeVar
 
 import httpx
 from kiota_abstractions.api_client_builder import (
@@ -21,9 +21,8 @@ from kiota_abstractions.serialization import (
 )
 from kiota_abstractions.store import BackingStoreFactory, BackingStoreFactorySingleton
 
-from .middleware.options import ResponseHandlerOption
 from .kiota_client_factory import KiotaClientFactory
-
+from .middleware.options import ResponseHandlerOption
 
 ResponseType = TypeVar("ResponseType", str, int, float, bool, datetime, bytes)
 ModelType = TypeVar("ModelType", bound=Parsable)
@@ -93,7 +92,8 @@ class HttpxRequestAdapter(RequestAdapter):
         return segments[0]
 
     async def send_async(
-        self, request_info: RequestInformation, model_type: ParsableFactory, error_map: Dict[str, ParsableFactory]
+        self, request_info: RequestInformation, model_type: ParsableFactory,
+        error_map: Dict[str, ParsableFactory]
     ) -> Optional[ModelType]:
         """Excutes the HTTP request specified by the given RequestInformation and returns the
         deserialized response model.
@@ -110,7 +110,7 @@ class HttpxRequestAdapter(RequestAdapter):
             raise TypeError("Request info cannot be null")
 
         response = await self.get_http_response_message(request_info)
-        
+
         response_handler = self.get_response_handler(request_info)
         if response_handler:
             return await response_handler.handle_response_async(response)
@@ -140,7 +140,7 @@ class HttpxRequestAdapter(RequestAdapter):
         if not request_info:
             raise TypeError("Request info cannot be null")
         response = await self.get_http_response_message(request_info)
-        
+
         response_handler = self.get_response_handler(request_info)
         if response_handler:
             return await response_handler.handle_response_async(response)
@@ -172,7 +172,7 @@ class HttpxRequestAdapter(RequestAdapter):
             raise TypeError("Request info cannot be null")
 
         response = await self.get_http_response_message(request_info)
-        
+
         response_handler = self.get_response_handler(request_info)
         if response_handler:
             return await response_handler.handle_response_async(response)
@@ -203,7 +203,7 @@ class HttpxRequestAdapter(RequestAdapter):
             raise TypeError("Request info cannot be null")
 
         response = await self.get_http_response_message(request_info)
-        
+
         response_handler = self.get_response_handler(request_info)
         if response_handler:
             return await response_handler.handle_response_async(response)
@@ -240,7 +240,7 @@ class HttpxRequestAdapter(RequestAdapter):
             raise TypeError("Request info cannot be null")
 
         response = await self.get_http_response_message(request_info)
-        
+
         response_handler = self.get_response_handler(request_info)
         if response_handler:
             return await response_handler.handle_response_async(response)
@@ -324,11 +324,10 @@ class HttpxRequestAdapter(RequestAdapter):
 
         resp = await self._http_client.send(request)
         return resp
-    
-    def get_response_handler(request_info: RequestInformation) -> Any:
-        if request_info:
-            return request_info.headers.get(ResponseHandlerOption.get_key())
-            
+
+    def get_response_handler(self, request_info: RequestInformation) -> Any:
+            return request_info.headers.get(ResponseHandlerOption().get_key())
+
     def set_base_url_for_request_information(self, request_info: RequestInformation) -> None:
         request_info.path_parameters["baseurl"] = self.base_url
 

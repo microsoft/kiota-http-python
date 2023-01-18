@@ -9,7 +9,7 @@ class RedirectHandlerOption(RequestOption):
     # The maximum allowed redirects
     MAX_MAX_REDIRECT = 20
 
-    REDIRECT_HANDLER_OPTION_KEY = "RedirectHandlerOptionKey"
+    REDIRECT_HANDLER_OPTION_KEY = "RedirectHandlerOption"
 
     def __init__(
         self,

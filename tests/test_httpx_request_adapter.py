@@ -3,12 +3,15 @@ import pytest
 from asyncmock import AsyncMock
 from kiota_abstractions.api_error import APIError
 from kiota_abstractions.method import Method
+from kiota_abstractions.native_response_handler import NativeResponseHandler
 from kiota_abstractions.serialization import (
     ParseNodeFactoryRegistry,
     SerializationWriterFactoryRegistry,
 )
 
+from kiota_http.middleware.options import ResponseHandlerOption
 from kiota_http.httpx_request_adapter import HttpxRequestAdapter
+
 
 from .helpers import MockResponseObject
 
@@ -62,7 +65,16 @@ def test_get_request_from_request_information(request_adapter, request_info):
     req = request_adapter.get_request_from_request_information(request_info)
     assert isinstance(req, httpx.Request)
 
-
+def test_get_response_handler(request_adapter, request_info):
+    response_handler_option = ResponseHandlerOption(response_handler=NativeResponseHandler())
+    
+    request_info.http_method = Method.GET
+    request_info.url = BASE_URL
+    request_info.content = bytes('hello world', 'utf_8')
+    request_info.add_request_options([response_handler_option])
+    response_handler = request_adapter.get_response_handler(request_info)
+    assert isinstance(response_handler, NativeResponseHandler)
+    
 def test_enable_backing_store(request_adapter):
     request_adapter.enable_backing_store(None)
     assert request_adapter._parse_node_factory
@@ -134,7 +146,7 @@ async def test_send_async(request_adapter, request_info, mock_user_response, moc
     request_adapter.get_root_parse_node = AsyncMock(return_value=mock_user)
     resp = await request_adapter.get_http_response_message(request_info)
     assert resp.headers.get("content-type") == 'application/json'
-    final_result = await request_adapter.send_async(request_info, MockResponseObject, None, {})
+    final_result = await request_adapter.send_async(request_info, MockResponseObject, {})
     assert final_result.display_name == mock_user.display_name
     assert final_result.office_location == mock_user.office_location
     assert final_result.business_phones == mock_user.business_phones
@@ -151,7 +163,7 @@ async def test_send_collection_async(request_adapter, request_info, mock_users_r
     resp = await request_adapter.get_http_response_message(request_info)
     assert resp.headers.get("content-type") == 'application/json'
     final_result = await request_adapter.send_collection_async(
-        request_info, MockResponseObject, None, {}
+        request_info, MockResponseObject, {}
     )
     assert final_result[0].display_name == mock_user.display_name
     assert final_result[1].office_location == mock_user.office_location
@@ -173,7 +185,7 @@ async def test_send_collection_of_primitive_async(
     resp = await request_adapter.get_http_response_message(request_info)
     assert resp.headers.get("content-type") == 'application/json'
     final_result = await request_adapter.send_collection_of_primitive_async(
-        request_info, float, None, {}
+        request_info, float, {}
     )
     assert final_result == [12.1, 12.2, 12.3, 12.4, 12.5]
 
@@ -186,7 +198,7 @@ async def test_send_primitive_async(
     request_adapter.get_root_parse_node = AsyncMock(return_value=mock_primitive)
     resp = await request_adapter.get_http_response_message(request_info)
     assert resp.headers.get("content-type") == 'application/json'
-    final_result = await request_adapter.send_primitive_async(request_info, float, None, {})
+    final_result = await request_adapter.send_primitive_async(request_info, float, {})
     assert final_result == 22.3
 
 
@@ -197,5 +209,5 @@ async def test_send_primitive_async_no_content(
     request_adapter.get_http_response_message = AsyncMock(return_value=mock_no_content_response)
     resp = await request_adapter.get_http_response_message(request_info)
     assert resp.headers.get("content-type") == 'application/json'
-    final_result = await request_adapter.send_primitive_async(request_info, float, None, {})
+    final_result = await request_adapter.send_primitive_async(request_info, float, {})
     assert final_result is None

@@ -12,7 +12,7 @@ def test_no_config():
     handler = ParametersNameDecodingHandler()
     assert handler.options.enabled is True
     assert handler.options.characters_to_decode == [".", "-", "~", "$"]
-    assert handler.options.get_key() == "ParametersNameDecodingHandlerOptionKey"
+    assert handler.options.get_key() == "ParametersNameDecodingHandlerOption"
 
 
 def test_custom_options():
@@ -24,4 +24,4 @@ def test_custom_options():
 
     assert handler.options.enabled is not True
     assert "$" not in handler.options.characters_to_decode
-    assert handler.options.get_key() == "ParametersNameDecodingHandlerOptionKey"
+    assert handler.options.get_key() == "ParametersNameDecodingHandlerOption"

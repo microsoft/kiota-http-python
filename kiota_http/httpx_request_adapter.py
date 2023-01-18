@@ -326,8 +326,11 @@ class HttpxRequestAdapter(RequestAdapter):
         return resp
 
     def get_response_handler(self, request_info: RequestInformation) -> Any:
-        return request_info.request_options.get(ResponseHandlerOption().get_key())
-
+        response_handler_option = request_info.request_options.get(ResponseHandlerOption().get_key())
+        if response_handler_option:
+            return response_handler_option.response_handler
+        return None
+    
     def set_base_url_for_request_information(self, request_info: RequestInformation) -> None:
         request_info.path_parameters["baseurl"] = self.base_url
 

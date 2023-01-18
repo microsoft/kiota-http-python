@@ -8,7 +8,9 @@ from kiota_abstractions.serialization import (
     SerializationWriterFactoryRegistry,
 )
 
+from kiota_http.middleware.options import ResponseHandlerOption
 from kiota_http.httpx_request_adapter import HttpxRequestAdapter
+
 
 from .helpers import MockResponseObject
 
@@ -62,7 +64,16 @@ def test_get_request_from_request_information(request_adapter, request_info):
     req = request_adapter.get_request_from_request_information(request_info)
     assert isinstance(req, httpx.Request)
 
-
+def test_get_response_handler(mock_user, request_adapter, request_info):
+    response_handler_option = ResponseHandlerOption(response_handler=mock_user)
+    
+    request_info.http_method = Method.GET
+    request_info.url = BASE_URL
+    request_info.content = bytes('hello world', 'utf_8')
+    request_info.add_request_options([response_handler_option])
+    response_handler = request_adapter.get_response_handler(request_info)
+    assert isinstance(response_handler, type(mock_user))
+    
 def test_enable_backing_store(request_adapter):
     request_adapter.enable_backing_store(None)
     assert request_adapter._parse_node_factory

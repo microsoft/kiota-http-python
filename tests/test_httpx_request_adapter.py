@@ -66,14 +66,14 @@ def test_get_request_from_request_information(request_adapter, request_info):
     assert isinstance(req, httpx.Request)
 
 def test_get_response_handler(request_adapter, request_info):
-    response_handler_option = ResponseHandlerOption(response_handler=NativeResponseHandler)
+    response_handler_option = ResponseHandlerOption(response_handler=NativeResponseHandler())
     
     request_info.http_method = Method.GET
     request_info.url = BASE_URL
     request_info.content = bytes('hello world', 'utf_8')
     request_info.add_request_options([response_handler_option])
     response_handler = request_adapter.get_response_handler(request_info)
-    assert response_handler is NativeResponseHandler
+    assert isinstance(response_handler, NativeResponseHandler)
     
 def test_enable_backing_store(request_adapter):
     request_adapter.enable_backing_store(None)

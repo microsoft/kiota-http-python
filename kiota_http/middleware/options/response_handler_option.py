@@ -13,7 +13,7 @@ class ResponseHandlerOption(RequestOption):
         """To create an instance of ResponseHandlerOption
 
         Args:
-            response_handler (Any): - The response handler instance
+            response_handler (ResponseHandler): - The response handler instance
         """
         self._response_handler = response_handler
 

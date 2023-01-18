@@ -3,6 +3,7 @@ import pytest
 from asyncmock import AsyncMock
 from kiota_abstractions.api_error import APIError
 from kiota_abstractions.method import Method
+from kiota_abstractions.native_response_handler import NativeResponseHandler
 from kiota_abstractions.serialization import (
     ParseNodeFactoryRegistry,
     SerializationWriterFactoryRegistry,
@@ -64,15 +65,15 @@ def test_get_request_from_request_information(request_adapter, request_info):
     req = request_adapter.get_request_from_request_information(request_info)
     assert isinstance(req, httpx.Request)
 
-def test_get_response_handler(mock_user, request_adapter, request_info):
-    response_handler_option = ResponseHandlerOption(response_handler=mock_user)
+def test_get_response_handler(request_adapter, request_info):
+    response_handler_option = ResponseHandlerOption(response_handler=NativeResponseHandler)
     
     request_info.http_method = Method.GET
     request_info.url = BASE_URL
     request_info.content = bytes('hello world', 'utf_8')
     request_info.add_request_options([response_handler_option])
     response_handler = request_adapter.get_response_handler(request_info)
-    assert isinstance(response_handler, type(mock_user))
+    assert response_handler is NativeResponseHandler
     
 def test_enable_backing_store(request_adapter):
     request_adapter.enable_backing_store(None)

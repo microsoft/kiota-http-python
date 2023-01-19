@@ -1,8 +1,10 @@
 from __future__ import annotations
 
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 import httpx
+
+from kiota_abstractions.request_option import RequestOption
 
 from .middleware import (
     AsyncKiotaTransport,
@@ -11,6 +13,12 @@ from .middleware import (
     ParametersNameDecodingHandler,
     RedirectHandler,
     RetryHandler,
+)
+
+from .middleware.options import (
+    ParametersNameDecodingHandlerOption,
+    RedirectHandlerOption,
+    RetryHandlerOption
 )
 
 DEFAULT_CONNECTION_TIMEOUT: int = 30
@@ -30,17 +38,21 @@ class KiotaClientFactory:
         return httpx.AsyncClient(timeout=timeout, http2=True)
 
     @staticmethod
-    def create_with_default_middleware() -> httpx.AsyncClient:
+    def create_with_default_middleware(options: Optional[Dict[str, RequestOption]] = None) -> httpx.AsyncClient:
         """Constructs native HTTP AsyncClient(httpx.AsyncClient) instances configured with
         a custom transport loaded with a default pipeline of middleware.
 
+        Args:
+            options (Optional[Dict[str, RequestOption]]): The request options to use when
+            instantiating default middleware. Defaults to Dict[str, RequestOption]=None.
+            
         Returns:
             httpx.AsycClient: An instance of the AsyncClient object
         """
 
         kiota_async_client = KiotaClientFactory.get_default_client()
         current_transport = kiota_async_client._transport
-        middleware = KiotaClientFactory.get_default_middleware()
+        middleware = KiotaClientFactory.get_default_middleware(options)
         middleware_pipeline = KiotaClientFactory.create_middleware_pipeline(
             middleware, current_transport
         )
@@ -74,12 +86,30 @@ class KiotaClientFactory:
         return kiota_async_client
 
     @staticmethod
-    def get_default_middleware() -> List[BaseMiddleware]:
+    def get_default_middleware(options: Optional[Dict[str, RequestOption]]) -> List[BaseMiddleware]:
         """
-        Helper method that returns a list of default middleware
+        Helper method that returns a list of default middleware instantiated with
+        appropriate options
         """
-        middleware = [RedirectHandler(), RetryHandler(), ParametersNameDecodingHandler()]
-
+        redirect_handler = RedirectHandler()
+        retry_handler = RetryHandler()
+        parameters_name_decoding_handler = ParametersNameDecodingHandler()
+        
+        if options:
+            redirect_handler_options = options.get(RedirectHandlerOption().get_key())
+            if redirect_handler_options:
+                redirect_handler = RedirectHandler(options=redirect_handler_options)
+                
+            retry_handler_options = options.get(RetryHandlerOption().get_key())
+            if retry_handler_options:
+                retry_handler = RetryHandler(options=retry_handler_options)
+                
+            parameters_name_decoding_handler_options = options.get(ParametersNameDecodingHandlerOption().get_key())
+            if parameters_name_decoding_handler_options:
+                parameters_name_decoding_handler = ParametersNameDecodingHandler(options=parameters_name_decoding_handler_options)
+        
+        
+        middleware = [redirect_handler, retry_handler, parameters_name_decoding_handler]
         return middleware
 
     @staticmethod

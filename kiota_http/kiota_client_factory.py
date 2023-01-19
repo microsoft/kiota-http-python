@@ -3,7 +3,6 @@ from __future__ import annotations
 from typing import Dict, List, Optional
 
 import httpx
-
 from kiota_abstractions.request_option import RequestOption
 
 from .middleware import (
@@ -14,11 +13,10 @@ from .middleware import (
     RedirectHandler,
     RetryHandler,
 )
-
 from .middleware.options import (
     ParametersNameDecodingHandlerOption,
     RedirectHandlerOption,
-    RetryHandlerOption
+    RetryHandlerOption,
 )
 
 DEFAULT_CONNECTION_TIMEOUT: int = 30
@@ -38,14 +36,16 @@ class KiotaClientFactory:
         return httpx.AsyncClient(timeout=timeout, http2=True)
 
     @staticmethod
-    def create_with_default_middleware(options: Optional[Dict[str, RequestOption]] = None) -> httpx.AsyncClient:
+    def create_with_default_middleware(
+        options: Optional[Dict[str, RequestOption]] = None
+    ) -> httpx.AsyncClient:
         """Constructs native HTTP AsyncClient(httpx.AsyncClient) instances configured with
         a custom transport loaded with a default pipeline of middleware.
 
         Args:
             options (Optional[Dict[str, RequestOption]]): The request options to use when
             instantiating default middleware. Defaults to Dict[str, RequestOption]=None.
-            
+
         Returns:
             httpx.AsycClient: An instance of the AsyncClient object
         """
@@ -94,21 +94,24 @@ class KiotaClientFactory:
         redirect_handler = RedirectHandler()
         retry_handler = RetryHandler()
         parameters_name_decoding_handler = ParametersNameDecodingHandler()
-        
+
         if options:
             redirect_handler_options = options.get(RedirectHandlerOption().get_key())
             if redirect_handler_options:
                 redirect_handler = RedirectHandler(options=redirect_handler_options)
-                
+
             retry_handler_options = options.get(RetryHandlerOption().get_key())
             if retry_handler_options:
                 retry_handler = RetryHandler(options=retry_handler_options)
-                
-            parameters_name_decoding_handler_options = options.get(ParametersNameDecodingHandlerOption().get_key())
+
+            parameters_name_decoding_handler_options = options.get(
+                ParametersNameDecodingHandlerOption().get_key()
+            )
             if parameters_name_decoding_handler_options:
-                parameters_name_decoding_handler = ParametersNameDecodingHandler(options=parameters_name_decoding_handler_options)
-        
-        
+                parameters_name_decoding_handler = ParametersNameDecodingHandler(
+                    options=parameters_name_decoding_handler_options
+                )
+
         middleware = [redirect_handler, retry_handler, parameters_name_decoding_handler]
         return middleware
 

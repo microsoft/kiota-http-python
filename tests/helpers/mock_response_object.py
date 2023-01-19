@@ -145,7 +145,7 @@ class MockResponseObject(Parsable, AdditionalDataHolder):
             raise Exception("parse_node cannot be undefined")
         return MockResponseObject()
 
-    def get_field_deserializers(self) -> Dict[str, Callable[[ParseNode], None]]:
+    def get_field_deserializers(self) -> Optional[Dict[str, Callable[[ParseNode], None]]]:
         """Gets the deserialization information for this object.
 
         Returns:

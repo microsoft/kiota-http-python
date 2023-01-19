@@ -9,9 +9,8 @@ from kiota_abstractions.serialization import (
     SerializationWriterFactoryRegistry,
 )
 
-from kiota_http.middleware.options import ResponseHandlerOption
 from kiota_http.httpx_request_adapter import HttpxRequestAdapter
-
+from kiota_http.middleware.options import ResponseHandlerOption
 
 from .helpers import MockResponseObject
 
@@ -65,16 +64,18 @@ def test_get_request_from_request_information(request_adapter, request_info):
     req = request_adapter.get_request_from_request_information(request_info)
     assert isinstance(req, httpx.Request)
 
+
 def test_get_response_handler(request_adapter, request_info):
     response_handler_option = ResponseHandlerOption(response_handler=NativeResponseHandler())
-    
+
     request_info.http_method = Method.GET
     request_info.url = BASE_URL
     request_info.content = bytes('hello world', 'utf_8')
     request_info.add_request_options([response_handler_option])
     response_handler = request_adapter.get_response_handler(request_info)
     assert isinstance(response_handler, NativeResponseHandler)
-    
+
+
 def test_enable_backing_store(request_adapter):
     request_adapter.enable_backing_store(None)
     assert request_adapter._parse_node_factory
@@ -162,9 +163,7 @@ async def test_send_collection_async(request_adapter, request_info, mock_users_r
     request_adapter.get_root_parse_node = AsyncMock(return_value=mock_user)
     resp = await request_adapter.get_http_response_message(request_info)
     assert resp.headers.get("content-type") == 'application/json'
-    final_result = await request_adapter.send_collection_async(
-        request_info, MockResponseObject, {}
-    )
+    final_result = await request_adapter.send_collection_async(request_info, MockResponseObject, {})
     assert final_result[0].display_name == mock_user.display_name
     assert final_result[1].office_location == mock_user.office_location
     assert final_result[0].business_phones == mock_user.business_phones
@@ -184,9 +183,7 @@ async def test_send_collection_of_primitive_async(
     request_adapter.get_root_parse_node = AsyncMock(return_value=mock_primitive)
     resp = await request_adapter.get_http_response_message(request_info)
     assert resp.headers.get("content-type") == 'application/json'
-    final_result = await request_adapter.send_collection_of_primitive_async(
-        request_info, float, {}
-    )
+    final_result = await request_adapter.send_collection_of_primitive_async(request_info, float, {})
     assert final_result == [12.1, 12.2, 12.3, 12.4, 12.5]
 
 

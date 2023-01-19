@@ -19,7 +19,8 @@ def test_create_with_default_middleware():
 
     assert isinstance(client, httpx.AsyncClient)
     assert isinstance(client._transport, AsyncKiotaTransport)
-    
+
+
 def test_create_with_default_middleware_options():
     """Test creation of HTTP Client using default middleware and custom options"""
     retry_options = RetryHandlerOption(max_retries=5)
@@ -33,7 +34,6 @@ def test_create_with_default_middleware_options():
     retry_handler = pipeline._first_middleware.next
     assert isinstance(retry_handler, RetryHandler)
     assert retry_handler.max_retries == retry_options.max_retry
-    
 
 
 def test_create_with_custom_middleware():
@@ -49,7 +49,7 @@ def test_create_with_custom_middleware():
     assert isinstance(pipeline._first_middleware, RetryHandler)
 
 
-def test_get_default_middleware(): 
+def test_get_default_middleware():
     """Test fetching of default middleware with no custom options passed"""
     middleware = KiotaClientFactory.get_default_middleware(None)
 
@@ -58,13 +58,16 @@ def test_get_default_middleware():
     assert isinstance(middleware[1], RetryHandler)
     assert isinstance(middleware[2], ParametersNameDecodingHandler)
 
+
 def test_get_default_middleware_with_options():
-    """Test fetching of default middleware with custom options passed"""   
+    """Test fetching of default middleware with custom options passed"""
     retry_options = RetryHandlerOption(max_retries=7)
     redirect_options = RedirectHandlerOption(should_redirect=False)
-    options = {f'{retry_options.get_key()}': retry_options,
-               f'{redirect_options.get_key()}': redirect_options}
-    
+    options = {
+        f'{retry_options.get_key()}': retry_options,
+        f'{redirect_options.get_key()}': redirect_options
+    }
+
     middleware = KiotaClientFactory.get_default_middleware(options=options)
 
     assert len(middleware) == 3
@@ -73,6 +76,7 @@ def test_get_default_middleware_with_options():
     assert isinstance(middleware[1], RetryHandler)
     assert middleware[1].max_retries == 7
     assert isinstance(middleware[2], ParametersNameDecodingHandler)
+
 
 def test_create_middleware_pipeline():
 

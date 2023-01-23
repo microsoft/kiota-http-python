@@ -57,7 +57,11 @@ def test_should_retry_valid():
     response = httpx.Response(503)
 
     retry_handler = RetryHandler()
-    assert retry_handler.should_retry(request, retry_handler.options, response,)
+    assert retry_handler.should_retry(
+        request,
+        retry_handler.options,
+        response,
+    )
 
 
 def test_should_retry_invalid():

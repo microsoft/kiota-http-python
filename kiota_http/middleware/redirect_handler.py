@@ -59,7 +59,7 @@ class RedirectHandler(BaseMiddleware):
         the request if necessary.
         """
         current_options = self._get_current_options(request)
-            
+
         retryable = True
         while retryable:
             response = await super().send(request, transport)
@@ -87,13 +87,13 @@ class RedirectHandler(BaseMiddleware):
             RedirectHandlerOption: The options to used.
         """
         current_options = self.options
-        request_options = request.options.get(RedirectHandlerOption.get_key())
+        request_options = request.options.get(RedirectHandlerOption.get_key())  # type:ignore
         # Override default options with request options
         if request_options:
             current_options = request_options
-            
+
         return current_options
-    
+
     def _build_redirect_request(
         self, request: httpx.Request, response: httpx.Response
     ) -> httpx.Request:

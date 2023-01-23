@@ -321,9 +321,7 @@ class HttpxRequestAdapter(RequestAdapter):
         return resp
 
     def get_response_handler(self, request_info: RequestInformation) -> Any:
-        response_handler_option = request_info.request_options.get(
-            ResponseHandlerOption.get_key()
-        )
+        response_handler_option = request_info.request_options.get(ResponseHandlerOption.get_key())
         if response_handler_option:
             return response_handler_option.response_handler
         return None
@@ -340,5 +338,5 @@ class HttpxRequestAdapter(RequestAdapter):
             headers=request_info.request_headers,
             content=request_info.content,
         )
-        request.options = request_info.request_options
+        request.options = request_info.request_options  # type:ignore
         return request

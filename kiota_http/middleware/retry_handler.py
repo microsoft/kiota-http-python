@@ -95,6 +95,24 @@ class RetryHandler(BaseMiddleware):
             break
         return response
 
+    def _get_current_options(self, request: httpx.Request) -> RetryHandlerOption:
+        """Returns the options to use for the request.Overries default options if
+        request options are passed.
+
+        Args:
+            request (httpx.Request): The prepared request object
+
+        Returns:
+            RetryHandlerOption: The options to used.
+        """
+        current_options = self.options
+        request_options = request.options.get(RetryHandlerOption.get_key())  # type:ignore
+        # Override default options with request options
+        if request_options:
+            current_options = request_options
+
+        return current_options
+
     def should_retry(self, request, options, response):
         """
         Determines whether the request should be retried

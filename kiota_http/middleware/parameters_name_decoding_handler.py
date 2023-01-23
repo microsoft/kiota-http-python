@@ -47,7 +47,7 @@ class ParametersNameDecodingHandler(BaseMiddleware):
         request.url = httpx.URL(updated_url)
         response = await super().send(request, transport)
         return response
-    
+
     def _get_current_options(self, request: httpx.Request) -> ParametersNameDecodingHandlerOption:
         """Returns the options to use for the request.Overries default options if
         request options are passed.
@@ -59,9 +59,11 @@ class ParametersNameDecodingHandler(BaseMiddleware):
             ParametersNameDecodingHandlerOption: The options to used.
         """
         current_options = self.options
-        request_options = request.options.get(ParametersNameDecodingHandlerOption.get_key())
+        request_options = request.options.get(              # type:ignore
+            ParametersNameDecodingHandlerOption.get_key()
+        )
         # Override default options with request options
         if request_options:
             current_options = request_options
-            
+
         return current_options

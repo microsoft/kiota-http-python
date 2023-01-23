@@ -54,22 +54,21 @@ class RetryHandler(BaseMiddleware):
 
     def __init__(self, options: RetryHandlerOption = RetryHandlerOption()) -> None:
         super().__init__()
-        self.max_retries: int = options.max_retry  #type: ignore
+        self.allowed_methods: FrozenSet[str] = self.DEFAULT_ALLOWED_METHODS
         self.backoff_factor: float = self.DEFAULT_BACKOFF_FACTOR
         self.backoff_max: int = self.MAXIMUM_BACKOFF
-        self.timeout: float = options.max_delay
-        self.retry_on_status_codes: Set[int] = self.DEFAULT_RETRY_STATUS_CODES
-        self.allowed_methods: FrozenSet[str] = self.DEFAULT_ALLOWED_METHODS
-        self.retries_allowed: bool = options.should_retry
+        self.options = options
         self.respect_retry_after_header: bool = options.DEFAULT_SHOULD_RETRY
+        self.retry_on_status_codes: Set[int] = self.DEFAULT_RETRY_STATUS_CODES
 
     async def send(self, request: httpx.Request, transport: httpx.AsyncBaseTransport):
         """
         Sends the http request object to the next middleware or retries the request if necessary.
         """
+        current_options = self._get_current_options(request)
         response = None
         retry_count = 0
-        retry_valid = self.retries_allowed
+        retry_valid = current_options.should_retry
 
         while retry_valid:
             start_time = time.time()
@@ -78,17 +77,17 @@ class RetryHandler(BaseMiddleware):
             response = await super().send(request, transport)
             # Check if the request needs to be retried based on the response method
             # and status code
-            if self.should_retry(request, response):
+            if self.should_retry(request, current_options, response):
                 # check that max retries has not been hit
-                retry_valid = self.check_retry_valid(retry_count)
+                retry_valid = self.check_retry_valid(retry_count, current_options)
 
                 # Get the delay time between retries
                 delay = self.get_delay_time(retry_count, response)
 
-                if retry_valid and delay < self.timeout:
+                if retry_valid and delay < current_options.max_delay:
                     time.sleep(delay)
                     end_time = time.time()
-                    self.timeout -= (end_time - start_time)
+                    current_options.max_delay -= (end_time - start_time)
                     # increment the count for retries
                     retry_count += 1
 
@@ -96,7 +95,7 @@ class RetryHandler(BaseMiddleware):
             break
         return response
 
-    def should_retry(self, request, response):
+    def should_retry(self, request, options, response):
         """
         Determines whether the request should be retried
         Checks if the request method is in allowed methods
@@ -106,7 +105,7 @@ class RetryHandler(BaseMiddleware):
             return False
         if not self._is_request_payload_buffered(request):
             return False
-        val = self.max_retries and (response.status_code in self.retry_on_status_codes)
+        val = options.max_retry and (response.status_code in self.retry_on_status_codes)
         return val
 
     def _is_method_retryable(self, request):
@@ -130,11 +129,11 @@ class RetryHandler(BaseMiddleware):
             return False
         return True
 
-    def check_retry_valid(self, retry_count):
+    def check_retry_valid(self, retry_count, options):
         """
         Check that the max retries limit has not been hit
         """
-        if retry_count < self.max_retries:
+        if retry_count < options.max_retry:
             return True
         return False
 

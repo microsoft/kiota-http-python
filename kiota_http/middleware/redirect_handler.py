@@ -23,12 +23,11 @@ class RedirectHandler(BaseMiddleware):
 
     def __init__(self, options: RedirectHandlerOption = RedirectHandlerOption()) -> None:
         super().__init__()
-        self.should_redirect: bool = options.should_redirect
-        self.max_redirects: int = options.max_redirect
+        self.options = options
         self.redirect_on_status_codes: typing.Set[int] = self.DEFAULT_REDIRECT_STATUS_CODES
         self.history: typing.List[httpx.Request] = []
 
-    def increment(self, response) -> bool:
+    def increment(self, response, max_redirect) -> bool:
         """Increment the redirect attempts for this request.
         Args
             response(httpx.Response): A httpx response object.
@@ -37,9 +36,8 @@ class RedirectHandler(BaseMiddleware):
             False if exhausted; True if more redirect attempts available.
         """
 
-        self.max_redirects -= 1
         self.history.append(response.request)
-        return self.max_redirects >= 0
+        return max_redirect >= 0
 
     def get_redirect_location(self, response: httpx.Response) -> typing.Union[str, bool, None]:
         """Checks for redirect status code and gets redirect location.
@@ -60,12 +58,15 @@ class RedirectHandler(BaseMiddleware):
         """Sends the http request object to the next middleware or redirects
         the request if necessary.
         """
+        current_options = self._get_current_options(request)
+            
         retryable = True
         while retryable:
             response = await super().send(request, transport)
             redirect_location = self.get_redirect_location(response)
-            if redirect_location and self.should_redirect:
-                retryable = self.increment(response)
+            if redirect_location and current_options.should_redirect:
+                current_options.max_redirect -= 1
+                retryable = self.increment(response, current_options.max_redirect)
                 new_request = self._build_redirect_request(request, response)
                 request = new_request
                 continue
@@ -75,6 +76,24 @@ class RedirectHandler(BaseMiddleware):
 
         raise Exception(f"Too many redirects. {response.history}")
 
+    def _get_current_options(self, request: httpx.Request) -> RedirectHandlerOption:
+        """Returns the options to use for the request.Overries default options if
+        request options are passed.
+
+        Args:
+            request (httpx.Request): The prepared request object
+
+        Returns:
+            RedirectHandlerOption: The options to used.
+        """
+        current_options = self.options
+        request_options = request.options.get(RedirectHandlerOption.get_key())
+        # Override default options with request options
+        if request_options:
+            current_options = request_options
+            
+        return current_options
+    
     def _build_redirect_request(
         self, request: httpx.Request, response: httpx.Response
     ) -> httpx.Request:

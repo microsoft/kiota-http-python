@@ -43,5 +43,5 @@ class ParametersNameDecodingHandlerOption(RequestOption):
         self._characters_to_decode = value
 
     @staticmethod
-    def get_key(self) -> str:
-        return self.PARAMETERS_NAME_DECODING_HANDLER_OPTION_KEY
+    def get_key() -> str:
+        return ParametersNameDecodingHandlerOption.PARAMETERS_NAME_DECODING_HANDLER_OPTION_KEY

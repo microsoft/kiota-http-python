@@ -113,7 +113,7 @@ class HttpxRequestAdapter(RequestAdapter):
 
         response_handler = self.get_response_handler(request_info)
         if response_handler:
-            return await response_handler.handle_response_async(response)
+            return await response_handler.handle_response_async(response, error_map)
 
         await self.throw_failed_responses(response, error_map)
         if self._should_return_none(response):
@@ -143,7 +143,7 @@ class HttpxRequestAdapter(RequestAdapter):
 
         response_handler = self.get_response_handler(request_info)
         if response_handler:
-            return await response_handler.handle_response_async(response)
+            return await response_handler.handle_response_async(response, error_map)
 
         await self.throw_failed_responses(response, error_map)
         if self._should_return_none(response):
@@ -175,7 +175,7 @@ class HttpxRequestAdapter(RequestAdapter):
 
         response_handler = self.get_response_handler(request_info)
         if response_handler:
-            return await response_handler.handle_response_async(response)
+            return await response_handler.handle_response_async(response, error_map)
 
         await self.throw_failed_responses(response, error_map)
         if self._should_return_none(response):
@@ -206,7 +206,7 @@ class HttpxRequestAdapter(RequestAdapter):
 
         response_handler = self.get_response_handler(request_info)
         if response_handler:
-            return await response_handler.handle_response_async(response)
+            return await response_handler.handle_response_async(response, error_map)
 
         await self.throw_failed_responses(response, error_map)
         if self._should_return_none(response):
@@ -243,7 +243,7 @@ class HttpxRequestAdapter(RequestAdapter):
 
         response_handler = self.get_response_handler(request_info)
         if response_handler:
-            return await response_handler.handle_response_async(response)
+            return await response_handler.handle_response_async(response, error_map)
 
         await self.throw_failed_responses(response, error_map)
 

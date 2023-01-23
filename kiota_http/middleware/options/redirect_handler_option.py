@@ -60,5 +60,6 @@ class RedirectHandlerOption(RequestOption):
     def allow_redirect_on_scheme_change(self, value: bool):
         self._allow_redirect_on_scheme_change = value
 
+    @staticmethod
     def get_key(self) -> str:
         return self.REDIRECT_HANDLER_OPTION_KEY

@@ -19,8 +19,8 @@ def test_no_config():
     """
     options = RedirectHandlerOption()
     handler = RedirectHandler()
-    assert handler.should_redirect == options.should_redirect
-    assert handler.max_redirects == options.max_redirect
+    assert handler.options.should_redirect == options.should_redirect
+    assert handler.options.max_redirect == options.max_redirect
     assert handler.redirect_on_status_codes == handler.DEFAULT_REDIRECT_STATUS_CODES
 
 
@@ -34,8 +34,8 @@ def test_custom_options():
 
     handler = RedirectHandler(options)
 
-    assert handler.max_redirects == 3
-    assert not handler.should_redirect
+    assert handler.options.max_redirect == 3
+    assert not handler.options.should_redirect
 
 
 def test_increment_redirects():
@@ -46,7 +46,7 @@ def test_increment_redirects():
     response = httpx.Response(301, request=request)
 
     handler = RedirectHandler()
-    assert handler.increment(response)
+    assert handler.increment(response, handler.options.max_redirect)
 
 
 def test_same_origin(mock_redirect_handler):

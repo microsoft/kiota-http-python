@@ -93,6 +93,8 @@ class RetryHandler(BaseMiddleware):
 
                     continue
             break
+        if response is None:
+            response = await super().send(request, transport)
         return response
 
     def _get_current_options(self, request: httpx.Request) -> RetryHandlerOption:

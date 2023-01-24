@@ -113,7 +113,7 @@ class HttpxRequestAdapter(RequestAdapter):
 
         response_handler = self.get_response_handler(request_info)
         if response_handler:
-            return await response_handler.handle_response_async(response)
+            return await response_handler.handle_response_async(response, error_map)
 
         await self.throw_failed_responses(response, error_map)
         if self._should_return_none(response):
@@ -143,7 +143,7 @@ class HttpxRequestAdapter(RequestAdapter):
 
         response_handler = self.get_response_handler(request_info)
         if response_handler:
-            return await response_handler.handle_response_async(response)
+            return await response_handler.handle_response_async(response, error_map)
 
         await self.throw_failed_responses(response, error_map)
         if self._should_return_none(response):
@@ -175,7 +175,7 @@ class HttpxRequestAdapter(RequestAdapter):
 
         response_handler = self.get_response_handler(request_info)
         if response_handler:
-            return await response_handler.handle_response_async(response)
+            return await response_handler.handle_response_async(response, error_map)
 
         await self.throw_failed_responses(response, error_map)
         if self._should_return_none(response):
@@ -206,7 +206,7 @@ class HttpxRequestAdapter(RequestAdapter):
 
         response_handler = self.get_response_handler(request_info)
         if response_handler:
-            return await response_handler.handle_response_async(response)
+            return await response_handler.handle_response_async(response, error_map)
 
         await self.throw_failed_responses(response, error_map)
         if self._should_return_none(response):
@@ -243,7 +243,7 @@ class HttpxRequestAdapter(RequestAdapter):
 
         response_handler = self.get_response_handler(request_info)
         if response_handler:
-            return await response_handler.handle_response_async(response)
+            return await response_handler.handle_response_async(response, error_map)
 
         await self.throw_failed_responses(response, error_map)
 
@@ -317,18 +317,11 @@ class HttpxRequestAdapter(RequestAdapter):
         await self._authentication_provider.authenticate_request(request_info)
 
         request = self.get_request_from_request_information(request_info)
-
-        # Pass request options in the headers as send method does not support.
-        # The header will be removed by the last middleware before the request is sent.
-        request.headers["request_options"] = str(request_info.request_options)
-
         resp = await self._http_client.send(request)
         return resp
 
     def get_response_handler(self, request_info: RequestInformation) -> Any:
-        response_handler_option = request_info.request_options.get(
-            ResponseHandlerOption().get_key()
-        )
+        response_handler_option = request_info.request_options.get(ResponseHandlerOption.get_key())
         if response_handler_option:
             return response_handler_option.response_handler
         return None
@@ -345,4 +338,5 @@ class HttpxRequestAdapter(RequestAdapter):
             headers=request_info.request_headers,
             content=request_info.content,
         )
+        request.options = request_info.request_options  # type:ignore
         return request

@@ -11,6 +11,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Fixed bug with middleware not respecting request options.
+
+## [0.3.0] - 2023-01-20
+
+### Changed
+
 - Enabled configuring of middleware during client creation by passing custom options in call to create with default middleware. [#56](https://github.com/microsoft/kiota-http-python/issues/56)
 
 ## [0.2.4] - 2023-01-17

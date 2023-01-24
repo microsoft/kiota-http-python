@@ -22,5 +22,6 @@ class ResponseHandlerOption(RequestOption):
         """Property to return the response handler instance"""
         return self._response_handler
 
-    def get_key(self):
-        return self.RESPONSE_HANDLER_OPTION_KEY
+    @staticmethod
+    def get_key():
+        return ResponseHandlerOption.RESPONSE_HANDLER_OPTION_KEY

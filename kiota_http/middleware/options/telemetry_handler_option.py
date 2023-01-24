@@ -3,7 +3,7 @@ from typing import Callable
 from kiota_abstractions.request_option import RequestOption
 
 
-class TelemetrytHandlerOption(RequestOption):
+class TelemetryHandlerOption(RequestOption):
 
     TELEMETRY_HANDLER_OPTION_KEY = 'TelemetryHandlerOption'
 
@@ -18,5 +18,6 @@ class TelemetrytHandlerOption(RequestOption):
     def telemetry_configurator(self, value: Callable[[], None]) -> None:
         self._telemetry_configurator = value
 
-    def get_key(self):
-        return self.TELEMETRY_HANDLER_OPTION_KEY
+    @staticmethod
+    def get_key():
+        return TelemetryHandlerOption.TELEMETRY_HANDLER_OPTION_KEY

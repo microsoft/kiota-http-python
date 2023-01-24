@@ -48,9 +48,9 @@ class BaseMiddleware():
 
     async def send(self, request, transport):
         if self.next is None:
-            # Remove request options. No longer needed.
-            if 'request_options' in request.headers:
-                del request.headers['request_options']
+            # Remove request options if there's no other middleware in the chain.
+            if request.options:
+                delattr(request, 'options')
             response = await transport.handle_async_request(request)
             response.request = request
             return response

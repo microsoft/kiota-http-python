@@ -16,8 +16,8 @@ def test_no_config():
     """
     options = RetryHandlerOption()
     retry_handler = RetryHandler()
-    assert retry_handler.max_retries == options.max_retry
-    assert retry_handler.timeout == options.max_delay
+    assert retry_handler.options.max_retry == options.max_retry
+    assert retry_handler.options.max_delay == options.max_delay
     assert retry_handler.allowed_methods == frozenset(
         ['HEAD', 'GET', 'PUT', 'POST', 'PATCH', 'DELETE', 'OPTIONS']
     )
@@ -35,9 +35,9 @@ def test_custom_options():
 
     retry_handler = RetryHandler(options)
 
-    assert retry_handler.max_retries == 1
-    assert retry_handler.timeout == 100
-    assert not retry_handler.retries_allowed
+    assert retry_handler.options.max_retry == 1
+    assert retry_handler.options.max_delay == 100
+    assert not retry_handler.options.should_retry
 
 
 def test_method_retryable_with_valid_method():
@@ -57,7 +57,11 @@ def test_should_retry_valid():
     response = httpx.Response(503)
 
     retry_handler = RetryHandler()
-    assert retry_handler.should_retry(request, response)
+    assert retry_handler.should_retry(
+        request,
+        retry_handler.options,
+        response,
+    )
 
 
 def test_should_retry_invalid():
@@ -69,7 +73,7 @@ def test_should_retry_invalid():
 
     retry_handler = RetryHandler()
 
-    assert not retry_handler.should_retry(request, response)
+    assert not retry_handler.should_retry(request, retry_handler.options, response)
 
 
 def test_is_request_payload_buffered_valid():
@@ -102,7 +106,7 @@ def test_check_retry_valid():
     """
     retry_handler = RetryHandler()
 
-    assert retry_handler.check_retry_valid(0)
+    assert retry_handler.check_retry_valid(0, retry_handler.options)
 
 
 def test_check_retry_valid_no_retries():
@@ -113,7 +117,7 @@ def test_check_retry_valid_no_retries():
     options.max_retry = 2
     retry_handler = RetryHandler(options)
 
-    assert not retry_handler.check_retry_valid(2)
+    assert not retry_handler.check_retry_valid(2, retry_handler.options)
 
 
 def test_get_retry_after():

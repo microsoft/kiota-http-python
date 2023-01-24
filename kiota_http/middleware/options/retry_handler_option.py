@@ -14,10 +14,10 @@ class RetryHandlerOption(RequestOption):
     MAX_MAX_RETRIES: int = 10
 
     # Default delay value in seconds
-    DEFAULT_DELAY: int = 3
+    DEFAULT_DELAY: float = 3.0
 
     # Default maximum delay value in seconds
-    MAX_DELAY: int = 180
+    MAX_DELAY: float = 180.0
 
     # Default value for should retry
     DEFAULT_SHOULD_RETRY: bool = True
@@ -26,7 +26,7 @@ class RetryHandlerOption(RequestOption):
 
     def __init__(
         self,
-        delay: int = DEFAULT_DELAY,
+        delay: float = DEFAULT_DELAY,
         max_retries: int = DEFAULT_MAX_RETRIES,
         should_retry: bool = DEFAULT_SHOULD_RETRY
     ) -> None:
@@ -49,15 +49,15 @@ class RetryHandlerOption(RequestOption):
             raise ValueError(f'InvalidMinValue. MaxRetries should not be negative')
 
         self._max_retry: int = min(max_retries, self.MAX_MAX_RETRIES)
-        self._max_delay: int = min(delay, self.MAX_DELAY)
+        self._max_delay: float = min(delay, self.MAX_DELAY)
         self._should_retry: bool = should_retry
 
     @property
-    def max_delay(self) -> int:
+    def max_delay(self) -> float:
         return self._max_delay
 
     @max_delay.setter
-    def max_delay(self, value: int) -> None:
+    def max_delay(self, value: float) -> None:
         if value > self.MAX_DELAY:
             raise ValueError(f'MaxLimitExceeded. Delay should not be more than ${self.MAX_DELAY}')
         if value < 0:
@@ -86,5 +86,6 @@ class RetryHandlerOption(RequestOption):
     def should_retry(self, value: bool) -> None:
         self._should_retry = value
 
-    def get_key(self):
-        return self.RETRY_HANDLER_OPTION_KEY
+    @staticmethod
+    def get_key():
+        return RetryHandlerOption.RETRY_HANDLER_OPTION_KEY

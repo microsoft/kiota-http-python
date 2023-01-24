@@ -30,19 +30,13 @@ class ParametersNameDecodingHandler(BaseMiddleware):
         """To execute the current middleware
 
         Args:
-            request (PreparedRequest): The prepared request object
-            request_options (Dict[str, RequestOption]): The request options
+            request (httpx.Request): The prepared request object
+            transport(httpx.AsyncBaseTransport): The HTTP transport to use
 
         Returns:
             Response: The response object.
         """
-        current_options = self.options
-        options_key = (
-            ParametersNameDecodingHandlerOption.PARAMETERS_NAME_DECODING_HANDLER_OPTION_KEY
-        )
-        request_options = json.loads(request.headers['request_options'])
-        if request_options and options_key in request_options:
-            current_options = request_options[options_key]
+        current_options = self._get_current_options(request)
 
         updated_url: str = str(request.url)  #type: ignore
         if (
@@ -53,3 +47,23 @@ class ParametersNameDecodingHandler(BaseMiddleware):
         request.url = httpx.URL(updated_url)
         response = await super().send(request, transport)
         return response
+
+    def _get_current_options(self, request: httpx.Request) -> ParametersNameDecodingHandlerOption:
+        """Returns the options to use for the request.Overries default options if
+        request options are passed.
+
+        Args:
+            request (httpx.Request): The prepared request object
+
+        Returns:
+            ParametersNameDecodingHandlerOption: The options to used.
+        """
+        current_options = self.options
+        request_options = request.options.get(              # type:ignore
+            ParametersNameDecodingHandlerOption.get_key()
+        )
+        # Override default options with request options
+        if request_options:
+            current_options = request_options
+
+        return current_options

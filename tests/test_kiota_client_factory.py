@@ -33,7 +33,7 @@ def test_create_with_default_middleware_options():
     assert isinstance(pipeline._first_middleware, RedirectHandler)
     retry_handler = pipeline._first_middleware.next
     assert isinstance(retry_handler, RetryHandler)
-    assert retry_handler.max_retries == retry_options.max_retry
+    assert retry_handler.options.max_retry == retry_options.max_retry
 
 
 def test_create_with_custom_middleware():
@@ -72,9 +72,9 @@ def test_get_default_middleware_with_options():
 
     assert len(middleware) == 3
     assert isinstance(middleware[0], RedirectHandler)
-    assert middleware[0].should_redirect is False
+    assert middleware[0].options.should_redirect is False
     assert isinstance(middleware[1], RetryHandler)
-    assert middleware[1].max_retries == 7
+    assert middleware[1].options.max_retry == 7
     assert isinstance(middleware[2], ParametersNameDecodingHandler)
 
 

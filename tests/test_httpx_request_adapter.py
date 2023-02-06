@@ -100,13 +100,11 @@ async def test_throw_failed_responses_null_error_map(request_adapter, simple_res
     content_type = request_adapter.get_response_content_type(simple_response)
     assert content_type == 'application/json'
 
-    with pytest.raises(
-        APIError,
-        match=
-        r"The server returned an unexpected status code and"\
-            " no error class is registered for this code 404"
-    ):
+    with pytest.raises(APIError) as e:
         await request_adapter.throw_failed_responses(simple_response, None)
+    assert str(e.value) == "The server returned an unexpected status code and"\
+            " no error class is registered for this code 404"
+    assert e.value.response_status_code == 404
 
 
 @pytest.mark.asyncio
@@ -118,13 +116,11 @@ async def test_throw_failed_responses_no_error_class(
     content_type = request_adapter.get_response_content_type(simple_response)
     assert content_type == 'application/json'
 
-    with pytest.raises(
-        APIError,
-        match=
-        r"The server returned an unexpected status code and"\
-        " no error class is registered for this code 404"
-    ):
+    with pytest.raises(APIError) as e:
         await request_adapter.throw_failed_responses(simple_response, mock_error_map)
+    assert str(e.value) == "The server returned an unexpected status code and"\
+            " no error class is registered for this code 404"
+    assert e.value.response_status_code == 404
 
 
 @pytest.mark.asyncio
@@ -137,8 +133,9 @@ async def test_throw_failed_responses_status_code_str_in_error_map(
     content_type = request_adapter.get_response_content_type(resp)
     assert content_type == 'application/json'
 
-    with pytest.raises(Exception, match=r"Internal Server Error"):
+    with pytest.raises(Exception) as e:
         await request_adapter.throw_failed_responses(resp, mock_error_map)
+    assert str(e.value) == "Internal Server Error"
 
 
 @pytest.mark.asyncio

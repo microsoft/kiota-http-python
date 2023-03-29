@@ -192,7 +192,7 @@ async def test_send_primitive_async(
     request_adapter.get_root_parse_node = AsyncMock(return_value=mock_primitive)
     resp = await request_adapter.get_http_response_message(request_info)
     assert resp.headers.get("content-type") == 'application/json'
-    final_result = await request_adapter.send_primitive_async(request_info, float, {})
+    final_result = await request_adapter.send_primitive_async(request_info, "float", {})
     assert final_result == 22.3
 
 

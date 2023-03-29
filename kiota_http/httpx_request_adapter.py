@@ -212,18 +212,18 @@ class HttpxRequestAdapter(RequestAdapter):
         if self._should_return_none(response):
             return None
         root_node = await self.get_root_parse_node(response)
-        if response_type == str:
-            return root_node.get_string_value()
-        if response_type == int:
+        if response_type == "str":
+            return root_node.get_str_value()
+        if response_type == "int":
             return root_node.get_int_value()
-        if response_type == float:
+        if response_type == "float":
             return root_node.get_float_value()
-        if response_type == bool:
-            return root_node.get_boolean_value()
-        if response_type == datetime:
+        if response_type == "bool":
+            return root_node.get_bool_value()
+        if response_type == "datetime":
             return root_node.get_datetime_value()
-        if response_type == bytes:
-            return root_node.get_bytearray_value()
+        if response_type == "bytes":
+            return root_node.get_bytes_value()
         raise Exception("Found unexpected type to deserialize")
 
     async def send_no_response_content_async(

@@ -46,8 +46,8 @@ def test_get_serialization_writer_factory(request_adapter):
     )
 
 
-def test_get_response_content_type(request_adapter, simple_response):
-    content_type = request_adapter.get_response_content_type(simple_response)
+def test_get_response_content_type(request_adapter, simple_success_response):
+    content_type = request_adapter.get_response_content_type(simple_success_response)
     assert content_type == 'application/json'
 
 
@@ -83,25 +83,34 @@ def test_enable_backing_store(request_adapter):
 
 
 @pytest.mark.asyncio
-async def test_get_root_parse_node(request_adapter, simple_response):
-    assert simple_response.text == '{"error": "not found"}'
-    assert simple_response.status_code == 404
-    content_type = request_adapter.get_response_content_type(simple_response)
+async def test_get_root_parse_node(request_adapter, simple_success_response):
+    assert simple_success_response.text == '{"message": "Success!"}'
+    assert simple_success_response.status_code == 200
+    content_type = request_adapter.get_response_content_type(simple_success_response)
     assert content_type == 'application/json'
 
     with pytest.raises(Exception) as e:
-        await request_adapter.get_root_parse_node(simple_response)
-
+        await request_adapter.get_root_parse_node(simple_success_response)
 
 @pytest.mark.asyncio
-async def test_throw_failed_responses_null_error_map(request_adapter, simple_response):
-    assert simple_response.text == '{"error": "not found"}'
-    assert simple_response.status_code == 404
-    content_type = request_adapter.get_response_content_type(simple_response)
+async def test_does_not_throw_failed_responses_on_success(request_adapter, simple_success_response):
+    try:
+        assert simple_success_response.text == '{"message": "Success!"}'
+        assert simple_success_response.status_code == 200
+        content_type = request_adapter.get_response_content_type(simple_success_response)
+        assert content_type == 'application/json'
+    except APIError as e:
+            assert False, f"'Function raised an exception {e}"
+    
+@pytest.mark.asyncio
+async def test_throw_failed_responses_null_error_map(request_adapter, simple_error_response):
+    assert simple_error_response.text == '{"error": "not found"}'
+    assert simple_error_response.status_code == 404
+    content_type = request_adapter.get_response_content_type(simple_error_response)
     assert content_type == 'application/json'
 
     with pytest.raises(APIError) as e:
-        await request_adapter.throw_failed_responses(simple_response, None)
+        await request_adapter.throw_failed_responses(simple_error_response, None)
     assert str(e.value) == "The server returned an unexpected status code and"\
             " no error class is registered for this code 404"
     assert e.value.response_status_code == 404
@@ -109,22 +118,22 @@ async def test_throw_failed_responses_null_error_map(request_adapter, simple_res
 
 @pytest.mark.asyncio
 async def test_throw_failed_responses_no_error_class(
-    request_adapter, simple_response, mock_error_map
+    request_adapter, simple_error_response, mock_error_map
 ):
-    assert simple_response.text == '{"error": "not found"}'
-    assert simple_response.status_code == 404
-    content_type = request_adapter.get_response_content_type(simple_response)
+    assert simple_error_response.text == '{"error": "not found"}'
+    assert simple_error_response.status_code == 404
+    content_type = request_adapter.get_response_content_type(simple_error_response)
     assert content_type == 'application/json'
 
     with pytest.raises(APIError) as e:
-        await request_adapter.throw_failed_responses(simple_response, mock_error_map)
+        await request_adapter.throw_failed_responses(simple_error_response, mock_error_map)
     assert str(e.value) == "The server returned an unexpected status code and"\
             " no error class is registered for this code 404"
     assert e.value.response_status_code == 404
 
 
 @pytest.mark.asyncio
-async def test_throw_failed_responses_status_code_str_in_error_map(
+async def test_throw_failed_responses_not_apierror(
     request_adapter, mock_error_map, mock_error_object
 ):
     request_adapter.get_root_parse_node = AsyncMock(return_value=mock_error_object)
@@ -135,7 +144,21 @@ async def test_throw_failed_responses_status_code_str_in_error_map(
 
     with pytest.raises(Exception) as e:
         await request_adapter.throw_failed_responses(resp, mock_error_map)
-    assert str(e.value) == "Internal Server Error"
+    assert str(e.value) == "Unexpected error type: <class 'Exception'>"
+    
+@pytest.mark.asyncio
+async def test_throw_failed_responses(
+    request_adapter, mock_apierror_map, mock_error_object
+):
+    request_adapter.get_root_parse_node = AsyncMock(return_value=mock_error_object)
+    resp = httpx.Response(status_code=500, headers={"Content-Type": "application/json"})
+    assert resp.status_code == 500
+    content_type = request_adapter.get_response_content_type(resp)
+    assert content_type == 'application/json'
+
+    with pytest.raises(APIError) as e:
+        await request_adapter.throw_failed_responses(resp, mock_apierror_map)
+    assert str(e.value) == "Custom Internal Server Error"
 
 
 @pytest.mark.asyncio

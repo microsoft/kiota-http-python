@@ -280,37 +280,40 @@ class HttpxRequestAdapter(RequestAdapter):
         if response.is_success:
             return
 
-        status_code = response.status_code
-        status_code_str = str(response.status_code)
+        response_status_code = response.status_code
+        response_status_code_str = str(response_status_code)
+        response_headers = response.headers
 
         if not error_map:
             raise APIError(
                 "The server returned an unexpected status code and no error class is registered"
-                f" for this code {status_code}", status_code
+                f" for this code {response_status_code}", response_headers, response_status_code
             )
-        if (status_code_str not in error_map) and (
-            (400 <= status_code < 500 and '4XX' not in error_map) or
-            (500 <= status_code < 600 and '5XX' not in error_map)
+        if (response_status_code_str not in error_map) and (
+            (400 <= response_status_code < 500 and '4XX' not in error_map) or
+            (500 <= response_status_code < 600 and '5XX' not in error_map)
         ):
             raise APIError(
                 "The server returned an unexpected status code and no error class is registered"
-                f" for this code {status_code}", status_code
+                f" for this code {response_status_code}", response_headers, response_status_code
             )
 
         error_class = None
-        if status_code_str in error_map:
-            error_class = error_map[status_code_str]
-        elif 400 <= status_code < 500:
+        if response_status_code_str in error_map:
+            error_class = error_map[response_status_code_str]
+        elif 400 <= response_status_code < 500:
             error_class = error_map['4XX']
-        elif 500 <= status_code < 600:
+        elif 500 <= response_status_code < 600:
             error_class = error_map['5XX']
 
         root_node = await self.get_root_parse_node(response)
         error = root_node.get_object_value(error_class)
 
-        if error:
+        if isinstance(error, APIError):
+            error.response_headers = response_headers
+            error.response_status_code = response_status_code
             raise error
-        raise APIError(f"Unexpected error type: {type(error)}", status_code)
+        raise APIError(f"Unexpected error type: {type(error)}", response_headers, response_status_code)
 
     async def get_http_response_message(self, request_info: RequestInformation) -> httpx.Response:
         self.set_base_url_for_request_information(request_info)

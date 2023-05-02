@@ -3,8 +3,8 @@ from dataclasses import dataclass
 import httpx
 import pytest
 from asyncmock import AsyncMock
-from kiota_abstractions.authentication import AnonymousAuthenticationProvider
 from kiota_abstractions.api_error import APIError
+from kiota_abstractions.authentication import AnonymousAuthenticationProvider
 from kiota_abstractions.request_information import RequestInformation
 
 from kiota_http.httpx_request_adapter import HttpxRequestAdapter
@@ -43,21 +43,22 @@ def mock_error_map():
     return {
         "500": Exception("Internal Server Error"),
     }
-    
+
+
 @pytest.fixture
 def mock_apierror_map():
     return {
-        "500": APIError(
-            "Custom Internal Server Error",
-            {
+        "500":
+        APIError(
+            "Custom Internal Server Error", {
                 'cache-control': 'private',
                 'transfer-encoding': 'chunked',
                 'content-type': 'application/json'
-            },
-            500
+            }, 500
         )
     }
-            
+
+
 @pytest.fixture
 def mock_request_adapter():
     resp = httpx.Response(
@@ -66,12 +67,14 @@ def mock_request_adapter():
     mock_request_adapter = AsyncMock
     mock_request_adapter.get_http_response_message = AsyncMock(return_value=resp)
 
+
 @pytest.fixture
 def simple_error_response():
     return httpx.Response(
         json={'error': 'not found'}, status_code=404, headers={"Content-Type": "application/json"}
     )
-    
+
+
 @pytest.fixture
 def simple_success_response():
     return httpx.Response(

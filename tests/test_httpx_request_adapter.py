@@ -92,6 +92,7 @@ async def test_get_root_parse_node(request_adapter, simple_success_response):
     with pytest.raises(Exception) as e:
         await request_adapter.get_root_parse_node(simple_success_response)
 
+
 @pytest.mark.asyncio
 async def test_does_not_throw_failed_responses_on_success(request_adapter, simple_success_response):
     try:
@@ -100,8 +101,9 @@ async def test_does_not_throw_failed_responses_on_success(request_adapter, simpl
         content_type = request_adapter.get_response_content_type(simple_success_response)
         assert content_type == 'application/json'
     except APIError as e:
-            assert False, f"'Function raised an exception {e}"
-    
+        assert False, f"'Function raised an exception {e}"
+
+
 @pytest.mark.asyncio
 async def test_throw_failed_responses_null_error_map(request_adapter, simple_error_response):
     assert simple_error_response.text == '{"error": "not found"}'
@@ -145,11 +147,10 @@ async def test_throw_failed_responses_not_apierror(
     with pytest.raises(Exception) as e:
         await request_adapter.throw_failed_responses(resp, mock_error_map)
     assert str(e.value) == "Unexpected error type: <class 'Exception'>"
-    
+
+
 @pytest.mark.asyncio
-async def test_throw_failed_responses(
-    request_adapter, mock_apierror_map, mock_error_object
-):
+async def test_throw_failed_responses(request_adapter, mock_apierror_map, mock_error_object):
     request_adapter.get_root_parse_node = AsyncMock(return_value=mock_error_object)
     resp = httpx.Response(status_code=500, headers={"Content-Type": "application/json"})
     assert resp.status_code == 500

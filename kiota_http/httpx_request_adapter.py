@@ -313,7 +313,9 @@ class HttpxRequestAdapter(RequestAdapter):
             error.response_headers = response_headers
             error.response_status_code = response_status_code
             raise error
-        raise APIError(f"Unexpected error type: {type(error)}", response_headers, response_status_code)
+        raise APIError(
+            f"Unexpected error type: {type(error)}", response_headers, response_status_code
+        )
 
     async def get_http_response_message(self, request_info: RequestInformation) -> httpx.Response:
         self.set_base_url_for_request_information(request_info)

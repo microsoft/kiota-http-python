@@ -4,7 +4,7 @@ astroid==2.15.4 ; python_full_version >= '3.7.2'
 
 asyncmock==0.4.2
 
-certifi==2022.12.7 ; python_version >= '3.6'
+certifi==2023.5.7 ; python_version >= '3.6'
 
 charset-normalizer==3.1.0 ; python_full_version >= '3.7.0'
 

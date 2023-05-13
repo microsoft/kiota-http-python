@@ -64,7 +64,7 @@ tomli-w==1.0.0 ; python_version >= '3.7'
 
 tomlkit==0.11.8 ; python_version >= '3.7'
 
-types-python-dateutil==2.8.19.12
+types-python-dateutil==2.8.19.13
 
 typing-extensions==4.5.0 ; python_version >= '3.7'
 

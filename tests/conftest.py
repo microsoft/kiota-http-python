@@ -167,6 +167,14 @@ def mock_primitive(mocker):
 def mock_primitive_response(mocker):
     return httpx.Response(200, json=22.3, headers={"Content-Type": "application/json"})
 
+@pytest.fixture
+def mock_primitive_response_bytes(mocker):
+    return httpx.Response(
+        200,
+        content=b'Hello World',
+        headers={"Content-Type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document"}
+    )
+
 
 @pytest.fixture
 def mock_no_content_response(mocker):

@@ -218,6 +218,17 @@ async def test_send_primitive_async(
     assert resp.headers.get("content-type") == 'application/json'
     final_result = await request_adapter.send_primitive_async(request_info, "float", {})
     assert final_result == 22.3
+    
+@pytest.mark.asyncio
+async def test_send_primitive_async_bytes(
+    request_adapter, request_info, mock_primitive_response_bytes, mock_primitive
+):
+    request_adapter.get_http_response_message = AsyncMock(return_value=mock_primitive_response_bytes)
+    request_adapter.get_root_parse_node = AsyncMock(return_value=mock_primitive)
+    resp = await request_adapter.get_http_response_message(request_info)
+    assert resp.headers.get("content-type") == 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    final_result = await request_adapter.send_primitive_async(request_info, "bytes", {})
+    assert final_result == b'Hello World'
 
 
 @pytest.mark.asyncio

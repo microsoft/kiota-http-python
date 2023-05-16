@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Any, Dict, List, Optional, TypeVar
+from typing import Any, Dict, List, Optional, TypeVar, Union
 
 import httpx
 from kiota_abstractions.api_client_builder import (
@@ -24,7 +24,7 @@ from kiota_abstractions.store import BackingStoreFactory, BackingStoreFactorySin
 from .kiota_client_factory import KiotaClientFactory
 from .middleware.options import ResponseHandlerOption
 
-ResponseType = TypeVar("ResponseType", str, int, float, bool, datetime, bytes)
+ResponseType = Union[str, int, float, bool, datetime, bytes]
 ModelType = TypeVar("ModelType", bound=Parsable)
 
 
@@ -99,7 +99,8 @@ class HttpxRequestAdapter(RequestAdapter):
         deserialized response model.
         Args:
             request_info (RequestInformation): the request info to execute.
-            type (ParsableFactory): the class of the response model to deserialize the response into
+            model_type (ParsableFactory): the class of the response model 
+            to deserialize the response into.
             error_map (Dict[str, ParsableFactory]): the error dict to use in
             case of a failed request.
 
@@ -130,7 +131,8 @@ class HttpxRequestAdapter(RequestAdapter):
         deserialized response model collection.
         Args:
             request_info (RequestInformation): the request info to execute.
-            type (ParsableFactory): the class of the response model to deserialize the response into
+            model_type (ParsableFactory): the class of the response model
+            to deserialize the response into.
             error_map (Dict[str, ParsableFactory]): the error dict to use in
             case of a failed request.
 
@@ -160,8 +162,8 @@ class HttpxRequestAdapter(RequestAdapter):
         deserialized response model collection.
         Args:
             request_info (RequestInformation): the request info to execute.
-            response_type (ResponseType): the class of the response model to deserialize the
-            response into.
+            response_type (ResponseType): the class of the response model
+            to deserialize the response into.
             error_map (Dict[str, ParsableFactory]): the error dict to use in
             case of a failed request.
 
@@ -211,6 +213,8 @@ class HttpxRequestAdapter(RequestAdapter):
         await self.throw_failed_responses(response, error_map)
         if self._should_return_none(response):
             return None
+        if response_type == "bytes":
+            return response.content
         root_node = await self.get_root_parse_node(response)
         if response_type == "str":
             return root_node.get_str_value()
@@ -222,8 +226,6 @@ class HttpxRequestAdapter(RequestAdapter):
             return root_node.get_bool_value()
         if response_type == "datetime":
             return root_node.get_datetime_value()
-        if response_type == "bytes":
-            return root_node.get_bytes_value()
         raise Exception("Found unexpected type to deserialize")
 
     async def send_no_response_content_async(

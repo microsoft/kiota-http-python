@@ -88,6 +88,8 @@ httpx[http2]==0.24.0
 
 hyperframe==6.0.1 ; python_full_version >= '3.6.1'
 
+idna==3.4 ; python_version >= '3.5'
+
 microsoft-kiota-abstractions==0.5.1
 
 sniffio==1.3.0 ; python_version >= '3.7'

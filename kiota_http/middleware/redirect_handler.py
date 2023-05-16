@@ -112,6 +112,8 @@ class RedirectHandler(BaseMiddleware):
             stream=stream,
             extensions=request.extensions,
         )
+        new_request.context = request.context
+        new_request.options = {}
         return new_request
 
     def _redirect_method(self, request: httpx.Request, response: httpx.Response) -> str:

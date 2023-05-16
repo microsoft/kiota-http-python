@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Any, Dict, List, Optional, TypeVar
+from typing import Any, Dict, List, Optional, TypeVar, Union
 
 import httpx
 from kiota_abstractions.api_client_builder import (
@@ -24,7 +24,7 @@ from kiota_abstractions.store import BackingStoreFactory, BackingStoreFactorySin
 from .kiota_client_factory import KiotaClientFactory
 from .middleware.options import ResponseHandlerOption
 
-ResponseType = TypeVar("ResponseType", str, int, float, bool, datetime, bytes)
+ResponseType = Union[str, int, float, bool, datetime, bytes]
 ModelType = TypeVar("ModelType", bound=Parsable)
 
 
@@ -92,16 +92,15 @@ class HttpxRequestAdapter(RequestAdapter):
         return segments[0]
 
     async def send_async(
-        self,
-        request_info: RequestInformation,
-        model_type: ParsableFactory,
+        self, request_info: RequestInformation, model_type: ParsableFactory,
         error_map: Dict[str, ParsableFactory]
     ) -> Optional[ModelType]:
         """Excutes the HTTP request specified by the given RequestInformation and returns the
         deserialized response model.
         Args:
             request_info (RequestInformation): the request info to execute.
-            model_type (ParsableFactory): the class of the response model to deserialize the response into
+            model_type (ParsableFactory): the class of the response model 
+            to deserialize the response into.
             error_map (Dict[str, ParsableFactory]): the error dict to use in
             case of a failed request.
 
@@ -125,16 +124,15 @@ class HttpxRequestAdapter(RequestAdapter):
         return result
 
     async def send_collection_async(
-        self,
-        request_info: RequestInformation,
-        model_type: ParsableFactory,
+        self, request_info: RequestInformation, model_type: ParsableFactory,
         error_map: Dict[str, ParsableFactory]
     ) -> Optional[List[ModelType]]:
         """Excutes the HTTP request specified by the given RequestInformation and returns the
         deserialized response model collection.
         Args:
             request_info (RequestInformation): the request info to execute.
-            model_type (ParsableFactory): the class of the response model to deserialize the response into
+            model_type (ParsableFactory): the class of the response model
+            to deserialize the response into.
             error_map (Dict[str, ParsableFactory]): the error dict to use in
             case of a failed request.
 
@@ -157,17 +155,15 @@ class HttpxRequestAdapter(RequestAdapter):
         return result
 
     async def send_collection_of_primitive_async(
-        self,
-        request_info: RequestInformation,
-        response_type: ResponseType,
+        self, request_info: RequestInformation, response_type: ResponseType,
         error_map: Dict[str, ParsableFactory]
     ) -> Optional[List[ResponseType]]:
         """Excutes the HTTP request specified by the given RequestInformation and returns the
         deserialized response model collection.
         Args:
             request_info (RequestInformation): the request info to execute.
-            response_type (ResponseType): the class of the response model to deserialize the
-            response into.
+            response_type (ResponseType): the class of the response model
+            to deserialize the response into.
             error_map (Dict[str, ParsableFactory]): the error dict to use in
             case of a failed request.
 
@@ -190,9 +186,7 @@ class HttpxRequestAdapter(RequestAdapter):
         return root_node.get_collection_of_primitive_values(response_type)
 
     async def send_primitive_async(
-        self,
-        request_info: RequestInformation,
-        response_type: ResponseType,
+        self, request_info: RequestInformation, response_type: ResponseType,
         error_map: Dict[str, ParsableFactory]
     ) -> Optional[ResponseType]:
         """Excutes the HTTP request specified by the given RequestInformation and returns the

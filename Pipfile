@@ -5,7 +5,7 @@ name = "pypi"
 
 [packages]
 microsoft-kiota-abstractions = "0.5.1"
-httpx = {version = "==0.24.0", extras = ["http2"]}
+httpx = {version = "==0.24.1", extras = ["http2"]}
 
 [dev-packages]
 flit = "==3.9.0"

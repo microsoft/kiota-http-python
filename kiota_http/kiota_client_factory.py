@@ -12,13 +12,13 @@ from .middleware import (
     ParametersNameDecodingHandler,
     RedirectHandler,
     RetryHandler,
-    UrlReplaceHandler
+    UrlReplaceHandler,
 )
 from .middleware.options import (
     ParametersNameDecodingHandlerOption,
     RedirectHandlerOption,
     RetryHandlerOption,
-    UrlReplaceHandlerOption
+    UrlReplaceHandlerOption,
 )
 
 DEFAULT_CONNECTION_TIMEOUT: int = 30
@@ -114,20 +114,13 @@ class KiotaClientFactory:
                 parameters_name_decoding_handler = ParametersNameDecodingHandler(
                     options=parameters_name_decoding_handler_options
                 )
-            
-            url_replace_handler_options = options.get(
-                UrlReplaceHandlerOption.get_key()
-            )
+
+            url_replace_handler_options = options.get(UrlReplaceHandlerOption.get_key())
             if url_replace_handler_options:
-                url_replace_handler = UrlReplaceHandler(
-                    options=url_replace_handler_options
-                )
+                url_replace_handler = UrlReplaceHandler(options=url_replace_handler_options)
 
         middleware = [
-            redirect_handler,
-            retry_handler,
-            parameters_name_decoding_handler,
-            url_replace_handler
+            redirect_handler, retry_handler, parameters_name_decoding_handler, url_replace_handler
         ]
         return middleware
 

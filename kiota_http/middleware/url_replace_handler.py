@@ -6,11 +6,7 @@ from .options import UrlReplaceHandlerOption
 
 class UrlReplaceHandler(BaseMiddleware):
 
-    def __init__(
-        self,
-        options: UrlReplaceHandlerOption = UrlReplaceHandlerOption(),
-        **kwargs
-    ):
+    def __init__(self, options: UrlReplaceHandlerOption = UrlReplaceHandlerOption(), **kwargs):
         """Create an instance of UrlReplaceHandler
 
         Args:
@@ -52,7 +48,7 @@ class UrlReplaceHandler(BaseMiddleware):
             UrlReplaceHandlerOption: The options to be used.
         """
         current_options = self.options
-        request_options = request.options.get(              # type:ignore
+        request_options = request.options.get(  # type:ignore
             UrlReplaceHandlerOption.get_key()
         )
         # Override default options with request options
@@ -60,13 +56,9 @@ class UrlReplaceHandler(BaseMiddleware):
             current_options = request_options
 
         return current_options
-    
-    
+
     def replace_url_segment(self, url_str: str, current_options: UrlReplaceHandlerOption) -> str:
-        if (
-            current_options and current_options.is_enabled
-            and current_options.replacement_pairs
-        ):
-            for k,v in current_options.replacement_pairs.items():
+        if (current_options and current_options.is_enabled and current_options.replacement_pairs):
+            for k, v in current_options.replacement_pairs.items():
                 url_str = url_str.replace(k, v)
         return url_str

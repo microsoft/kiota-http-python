@@ -60,5 +60,5 @@ class UrlReplaceHandler(BaseMiddleware):
     def replace_url_segment(self, url_str: str, current_options: UrlReplaceHandlerOption) -> str:
         if (current_options and current_options.is_enabled and current_options.replacement_pairs):
             for k, v in current_options.replacement_pairs.items():
-                url_str = url_str.replace(k, v)
+                url_str = url_str.replace(k, v, 1)
         return url_str

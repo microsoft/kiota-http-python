@@ -12,11 +12,13 @@ from .middleware import (
     ParametersNameDecodingHandler,
     RedirectHandler,
     RetryHandler,
+    UrlReplaceHandler,
 )
 from .middleware.options import (
     ParametersNameDecodingHandlerOption,
     RedirectHandlerOption,
     RetryHandlerOption,
+    UrlReplaceHandlerOption,
 )
 
 DEFAULT_CONNECTION_TIMEOUT: int = 30
@@ -94,25 +96,32 @@ class KiotaClientFactory:
         redirect_handler = RedirectHandler()
         retry_handler = RetryHandler()
         parameters_name_decoding_handler = ParametersNameDecodingHandler()
+        url_replace_handler = UrlReplaceHandler()
 
         if options:
-            redirect_handler_options = options.get(RedirectHandlerOption().get_key())
+            redirect_handler_options = options.get(RedirectHandlerOption.get_key())
             if redirect_handler_options:
                 redirect_handler = RedirectHandler(options=redirect_handler_options)
 
-            retry_handler_options = options.get(RetryHandlerOption().get_key())
+            retry_handler_options = options.get(RetryHandlerOption.get_key())
             if retry_handler_options:
                 retry_handler = RetryHandler(options=retry_handler_options)
 
             parameters_name_decoding_handler_options = options.get(
-                ParametersNameDecodingHandlerOption().get_key()
+                ParametersNameDecodingHandlerOption.get_key()
             )
             if parameters_name_decoding_handler_options:
                 parameters_name_decoding_handler = ParametersNameDecodingHandler(
                     options=parameters_name_decoding_handler_options
                 )
 
-        middleware = [redirect_handler, retry_handler, parameters_name_decoding_handler]
+            url_replace_handler_options = options.get(UrlReplaceHandlerOption.get_key())
+            if url_replace_handler_options:
+                url_replace_handler = UrlReplaceHandler(options=url_replace_handler_options)
+
+        middleware = [
+            redirect_handler, retry_handler, parameters_name_decoding_handler, url_replace_handler
+        ]
         return middleware
 
     @staticmethod

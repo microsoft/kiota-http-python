@@ -9,6 +9,7 @@ from kiota_http.middleware import (
     ParametersNameDecodingHandler,
     RedirectHandler,
     RetryHandler,
+    UrlReplaceHandler
 )
 from kiota_http.middleware.options import RedirectHandlerOption, RetryHandlerOption
 
@@ -53,10 +54,11 @@ def test_get_default_middleware():
     """Test fetching of default middleware with no custom options passed"""
     middleware = KiotaClientFactory.get_default_middleware(None)
 
-    assert len(middleware) == 3
+    assert len(middleware) == 4
     assert isinstance(middleware[0], RedirectHandler)
     assert isinstance(middleware[1], RetryHandler)
     assert isinstance(middleware[2], ParametersNameDecodingHandler)
+    assert isinstance(middleware[3], UrlReplaceHandler)
 
 
 def test_get_default_middleware_with_options():
@@ -70,7 +72,7 @@ def test_get_default_middleware_with_options():
 
     middleware = KiotaClientFactory.get_default_middleware(options=options)
 
-    assert len(middleware) == 3
+    assert len(middleware) == 4
     assert isinstance(middleware[0], RedirectHandler)
     assert middleware[0].options.should_redirect is False
     assert isinstance(middleware[1], RetryHandler)

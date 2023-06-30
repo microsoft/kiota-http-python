@@ -289,7 +289,7 @@ class HttpxRequestAdapter(RequestAdapter):
         if not error_map:
             raise APIError(
                 "The server returned an unexpected status code and no error class is registered"
-                f" for this code {response_status_code}", response_headers, response_status_code
+                f" for this code {response_status_code}", response_status_code, response_headers
             )
         if (response_status_code_str not in error_map) and (
             (400 <= response_status_code < 500 and '4XX' not in error_map) or
@@ -297,7 +297,7 @@ class HttpxRequestAdapter(RequestAdapter):
         ):
             raise APIError(
                 "The server returned an unexpected status code and no error class is registered"
-                f" for this code {response_status_code}", response_headers, response_status_code
+                f" for this code {response_status_code}", response_status_code, response_headers
             )
 
         error_class = None
@@ -316,7 +316,7 @@ class HttpxRequestAdapter(RequestAdapter):
             error.response_status_code = response_status_code
             raise error
         raise APIError(
-            f"Unexpected error type: {type(error)}", response_headers, response_status_code
+            f"Unexpected error type: {type(error)}", response_status_code, response_headers
         )
 
     async def get_http_response_message(self, request_info: RequestInformation) -> httpx.Response:

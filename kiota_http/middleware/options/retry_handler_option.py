@@ -1,5 +1,3 @@
-from typing import FrozenSet, Set
-
 from kiota_abstractions.request_option import RequestOption
 
 
@@ -42,11 +40,11 @@ class RetryHandlerOption(RequestOption):
                 f'MaxLimitExceeded. MaxRetries should not be more than ${self.MAX_MAX_RETRIES}'
             )
         if delay < 0 and max_retries < 0:
-            raise ValueError(f'InvalidMinValue. Delay and MaxRetries should not be negative')
+            raise ValueError('InvalidMinValue. Delay and MaxRetries should not be negative')
         if delay < 0:
-            raise ValueError(f'InvalidMinValue. Delay should not be negative')
+            raise ValueError('InvalidMinValue. Delay should not be negative')
         if max_retries < 0:
-            raise ValueError(f'InvalidMinValue. MaxRetries should not be negative')
+            raise ValueError('InvalidMinValue. MaxRetries should not be negative')
 
         self._max_retry: int = min(max_retries, self.MAX_MAX_RETRIES)
         self._max_delay: float = min(delay, self.MAX_DELAY)
@@ -61,7 +59,7 @@ class RetryHandlerOption(RequestOption):
         if value > self.MAX_DELAY:
             raise ValueError(f'MaxLimitExceeded. Delay should not be more than ${self.MAX_DELAY}')
         if value < 0:
-            raise ValueError(f'InvalidMinValue. Delay should not be negative')
+            raise ValueError('InvalidMinValue. Delay should not be negative')
         self._max_delay = value
 
     @property
@@ -75,7 +73,7 @@ class RetryHandlerOption(RequestOption):
                 f'MaxLimitExceeded. MaxRetries should not be more than ${self.MAX_MAX_RETRIES}'
             )
         if value < 0:
-            raise ValueError(f'InvalidMinValue. MaxRetries should not be negative')
+            raise ValueError('InvalidMinValue. MaxRetries should not be negative')
         self._max_retry = value
 
     @property

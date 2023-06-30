@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Any, Dict, List, Optional, TypeVar, Union
+from typing import Any, Dict, Generic, List, Optional, TypeVar, Union
 
 import httpx
 from kiota_abstractions.api_client_builder import (
@@ -28,7 +28,7 @@ ResponseType = Union[str, int, float, bool, datetime, bytes]
 ModelType = TypeVar("ModelType", bound=Parsable)
 
 
-class HttpxRequestAdapter(RequestAdapter):
+class HttpxRequestAdapter(RequestAdapter, Generic[ModelType]):
 
     def __init__(
         self,
@@ -226,7 +226,7 @@ class HttpxRequestAdapter(RequestAdapter):
             return root_node.get_bool_value()
         if response_type == "datetime":
             return root_node.get_datetime_value()
-        raise Exception("Found unexpected type to deserialize")
+        raise TypeError(f"Unable to deserialize type: {response_type!r}")
 
     async def send_no_response_content_async(
         self, request_info: RequestInformation, error_map: Dict[str, ParsableFactory]
@@ -260,7 +260,7 @@ class HttpxRequestAdapter(RequestAdapter):
         self._serialization_writer_factory = enable_backing_store_for_serialization_writer_factory(
             self._serialization_writer_factory
         )
-        if not (self._serialization_writer_factory or self._parse_node_factory):
+        if not any([self._serialization_writer_factory, self._parse_node_factory]):
             raise Exception("Unable to enable backing store")
         if backing_store_factory:
             BackingStoreFactorySingleton.__instance = backing_store_factory
@@ -289,7 +289,7 @@ class HttpxRequestAdapter(RequestAdapter):
         if not error_map:
             raise APIError(
                 "The server returned an unexpected status code and no error class is registered"
-                f" for this code {response_status_code}", response_headers, response_status_code
+                f" for this code {response_status_code}", response_status_code, response_headers
             )
         if (response_status_code_str not in error_map) and (
             (400 <= response_status_code < 500 and '4XX' not in error_map) or
@@ -297,7 +297,7 @@ class HttpxRequestAdapter(RequestAdapter):
         ):
             raise APIError(
                 "The server returned an unexpected status code and no error class is registered"
-                f" for this code {response_status_code}", response_headers, response_status_code
+                f" for this code {response_status_code}", response_status_code, response_headers
             )
 
         error_class = None
@@ -316,7 +316,7 @@ class HttpxRequestAdapter(RequestAdapter):
             error.response_status_code = response_status_code
             raise error
         raise APIError(
-            f"Unexpected error type: {type(error)}", response_headers, response_status_code
+            f"Unexpected error type: {type(error)}", response_status_code, response_headers
         )
 
     async def get_http_response_message(self, request_info: RequestInformation) -> httpx.Response:

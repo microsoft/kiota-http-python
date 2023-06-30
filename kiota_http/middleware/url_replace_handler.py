@@ -1,4 +1,5 @@
 import httpx
+from kiota_abstractions.request_option import RequestOption
 
 from .middleware import BaseMiddleware
 from .options import UrlReplaceHandlerOption
@@ -6,7 +7,7 @@ from .options import UrlReplaceHandlerOption
 
 class UrlReplaceHandler(BaseMiddleware):
 
-    def __init__(self, options: UrlReplaceHandlerOption = UrlReplaceHandlerOption(), **kwargs):
+    def __init__(self, options: RequestOption = UrlReplaceHandlerOption()):
         """Create an instance of UrlReplaceHandler
 
         Args:
@@ -47,18 +48,13 @@ class UrlReplaceHandler(BaseMiddleware):
         Returns:
             UrlReplaceHandlerOption: The options to be used.
         """
-        current_options = self.options
-        request_options = request.options.get(  # type:ignore
-            UrlReplaceHandlerOption.get_key()
+        current_options =request.options.get(  # type:ignore
+            UrlReplaceHandlerOption.get_key(), self.options
         )
-        # Override default options with request options
-        if request_options:
-            current_options = request_options
-
         return current_options
 
     def replace_url_segment(self, url_str: str, current_options: UrlReplaceHandlerOption) -> str:
-        if (current_options and current_options.is_enabled and current_options.replacement_pairs):
+        if all([current_options, current_options.is_enabled, current_options.replacement_pairs]):
             for k, v in current_options.replacement_pairs.items():
                 url_str = url_str.replace(k, v, 1)
         return url_str

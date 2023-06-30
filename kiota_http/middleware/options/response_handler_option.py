@@ -1,5 +1,3 @@
-from typing import Any
-
 from kiota_abstractions.request_option import RequestOption
 from kiota_abstractions.response_handler import ResponseHandler
 
@@ -9,7 +7,7 @@ class ResponseHandlerOption(RequestOption):
 
     RESPONSE_HANDLER_OPTION_KEY = "ResponseHandler"
 
-    def __init__(self, response_handler: ResponseHandler = None) -> None:
+    def __init__(self, response_handler: ResponseHandler | None = None) -> None:
         """To create an instance of ResponseHandlerOption
 
         Args:

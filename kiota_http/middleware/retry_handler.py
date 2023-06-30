@@ -2,9 +2,10 @@ import datetime
 import random
 import time
 from email.utils import parsedate_to_datetime
-from typing import FrozenSet, Set
+from typing import FrozenSet, Set, Type
 
 import httpx
+from kiota_abstractions.request_option import RequestOption
 
 from .middleware import BaseMiddleware
 from .options import RetryHandlerOption
@@ -52,13 +53,13 @@ class RetryHandler(BaseMiddleware):
         ['HEAD', 'GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS']
     )
 
-    def __init__(self, options: RetryHandlerOption = RetryHandlerOption()) -> None:
+    def __init__(self, options: RequestOption = RetryHandlerOption()) -> None:
         super().__init__()
         self.allowed_methods: FrozenSet[str] = self.DEFAULT_ALLOWED_METHODS
         self.backoff_factor: float = self.DEFAULT_BACKOFF_FACTOR
         self.backoff_max: int = self.MAXIMUM_BACKOFF
         self.options = options
-        self.respect_retry_after_header: bool = options.DEFAULT_SHOULD_RETRY
+        self.respect_retry_after_header: bool = self.options.DEFAULT_SHOULD_RETRY  # type:ignore
         self.retry_on_status_codes: Set[int] = self.DEFAULT_RETRY_STATUS_CODES
 
     async def send(self, request: httpx.Request, transport: httpx.AsyncBaseTransport):
@@ -107,12 +108,8 @@ class RetryHandler(BaseMiddleware):
         Returns:
             RetryHandlerOption: The options to used.
         """
-        current_options = self.options
-        request_options = request.options.get(RetryHandlerOption.get_key())  # type:ignore
-        # Override default options with request options
-        if request_options:
-            current_options = request_options
-
+        current_options = request.options.get( # type:ignore
+            RetryHandlerOption.get_key(), self.options)
         return current_options
 
     def should_retry(self, request, options, response):

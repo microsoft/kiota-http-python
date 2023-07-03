@@ -16,7 +16,7 @@ dill==0.3.6
 
 docutils==0.20.1
 
-exceptiongroup==1.1.1
+exceptiongroup==1.1.2
 
 flit==3.9.0
 

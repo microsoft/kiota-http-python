@@ -113,7 +113,7 @@ async def test_throw_failed_responses_null_error_map(request_adapter, simple_err
 
     with pytest.raises(APIError) as e:
         await request_adapter.throw_failed_responses(simple_error_response, None)
-    assert str(e.value) == "The server returned an unexpected status code and"\
+    assert str(e.value.message) == "The server returned an unexpected status code and"\
             " no error class is registered for this code 404"
     assert e.value.response_status_code == 404
 
@@ -129,7 +129,7 @@ async def test_throw_failed_responses_no_error_class(
 
     with pytest.raises(APIError) as e:
         await request_adapter.throw_failed_responses(simple_error_response, mock_error_map)
-    assert str(e.value) == "The server returned an unexpected status code and"\
+    assert str(e.value.message) == "The server returned an unexpected status code and"\
             " no error class is registered for this code 404"
     assert e.value.response_status_code == 404
 
@@ -146,7 +146,7 @@ async def test_throw_failed_responses_not_apierror(
 
     with pytest.raises(Exception) as e:
         await request_adapter.throw_failed_responses(resp, mock_error_map)
-    assert str(e.value) == "Unexpected error type: <class 'Exception'>"
+    assert str(e.value.message) == "Unexpected error type: <class 'Exception'>"
 
 
 @pytest.mark.asyncio
@@ -159,7 +159,7 @@ async def test_throw_failed_responses(request_adapter, mock_apierror_map, mock_e
 
     with pytest.raises(APIError) as e:
         await request_adapter.throw_failed_responses(resp, mock_apierror_map)
-    assert str(e.value) == "Custom Internal Server Error"
+    assert str(e.value.message) == "Custom Internal Server Error"
 
 
 @pytest.mark.asyncio
@@ -218,15 +218,20 @@ async def test_send_primitive_async(
     assert resp.headers.get("content-type") == 'application/json'
     final_result = await request_adapter.send_primitive_async(request_info, "float", {})
     assert final_result == 22.3
-    
+
+
 @pytest.mark.asyncio
 async def test_send_primitive_async_bytes(
     request_adapter, request_info, mock_primitive_response_bytes, mock_primitive
 ):
-    request_adapter.get_http_response_message = AsyncMock(return_value=mock_primitive_response_bytes)
+    request_adapter.get_http_response_message = AsyncMock(
+        return_value=mock_primitive_response_bytes
+    )
     request_adapter.get_root_parse_node = AsyncMock(return_value=mock_primitive)
     resp = await request_adapter.get_http_response_message(request_info)
-    assert resp.headers.get("content-type") == 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    assert resp.headers.get(
+        "content-type"
+    ) == 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
     final_result = await request_adapter.send_primitive_async(request_info, "bytes", {})
     assert final_result == b'Hello World'
 

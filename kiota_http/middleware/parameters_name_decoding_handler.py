@@ -1,7 +1,7 @@
-import json
 from urllib.parse import unquote
 
 import httpx
+from kiota_abstractions.request_option import RequestOption
 
 from .middleware import BaseMiddleware
 from .options import ParametersNameDecodingHandlerOption
@@ -11,8 +11,7 @@ class ParametersNameDecodingHandler(BaseMiddleware):
 
     def __init__(
         self,
-        options: ParametersNameDecodingHandlerOption = ParametersNameDecodingHandlerOption(),
-        **kwargs
+        options: RequestOption = ParametersNameDecodingHandlerOption(),
     ):
         """Create an instance of ParametersNameDecodingHandler
 
@@ -39,9 +38,11 @@ class ParametersNameDecodingHandler(BaseMiddleware):
         current_options = self._get_current_options(request)
 
         updated_url: str = str(request.url)  #type: ignore
-        if (
-            current_options and current_options.enabled and '%' in updated_url
-            and current_options.characters_to_decode
+        if all(
+            [
+                current_options, current_options.enabled, '%' in updated_url,
+                current_options.characters_to_decode
+            ]
         ):
             updated_url = unquote(updated_url)
         request.url = httpx.URL(updated_url)
@@ -58,12 +59,7 @@ class ParametersNameDecodingHandler(BaseMiddleware):
         Returns:
             ParametersNameDecodingHandlerOption: The options to used.
         """
-        current_options = self.options
-        request_options = request.options.get(              # type:ignore
-            ParametersNameDecodingHandlerOption.get_key()
+        current_options =request.options.get( # type:ignore
+            ParametersNameDecodingHandlerOption.get_key(), self.options
         )
-        # Override default options with request options
-        if request_options:
-            current_options = request_options
-
         return current_options

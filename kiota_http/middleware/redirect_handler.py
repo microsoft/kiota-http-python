@@ -1,6 +1,7 @@
 import typing
 
 import httpx
+from kiota_abstractions.request_option import RequestOption
 
 from .middleware import BaseMiddleware
 from .options import RedirectHandlerOption
@@ -21,7 +22,7 @@ class RedirectHandler(BaseMiddleware):
     LOCATION_HEADER: str = "Location"
     AUTHORIZATION_HEADER: str = "Authorization"
 
-    def __init__(self, options: RedirectHandlerOption = RedirectHandlerOption()) -> None:
+    def __init__(self, options: RequestOption = RedirectHandlerOption()) -> None:
         super().__init__()
         self.options = options
         self.redirect_on_status_codes: typing.Set[int] = self.DEFAULT_REDIRECT_STATUS_CODES
@@ -86,12 +87,8 @@ class RedirectHandler(BaseMiddleware):
         Returns:
             RedirectHandlerOption: The options to used.
         """
-        current_options = self.options
-        request_options = request.options.get(RedirectHandlerOption.get_key())  # type:ignore
-        # Override default options with request options
-        if request_options:
-            current_options = request_options
-
+        current_options = request.options.get( # type:ignore
+            RedirectHandlerOption.get_key(), self.options)
         return current_options
 
     def _build_redirect_request(

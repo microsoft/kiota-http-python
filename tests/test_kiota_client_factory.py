@@ -1,17 +1,13 @@
 import httpx
 import pytest
 
-from kiota_http import middleware
 from kiota_http.kiota_client_factory import KiotaClientFactory
 from kiota_http.middleware import (
-    AsyncKiotaTransport,
-    MiddlewarePipeline,
-    ParametersNameDecodingHandler,
-    RedirectHandler,
-    RetryHandler,
-    UrlReplaceHandler
+    AsyncKiotaTransport, MiddlewarePipeline, ParametersNameDecodingHandler, RedirectHandler,
+    RetryHandler, UrlReplaceHandler
 )
 from kiota_http.middleware.options import RedirectHandlerOption, RetryHandlerOption
+from kiota_http.middleware.user_agent_handler import UserAgentHandler
 
 
 def test_create_with_default_middleware():
@@ -54,11 +50,12 @@ def test_get_default_middleware():
     """Test fetching of default middleware with no custom options passed"""
     middleware = KiotaClientFactory.get_default_middleware(None)
 
-    assert len(middleware) == 4
+    assert len(middleware) == 5
     assert isinstance(middleware[0], RedirectHandler)
     assert isinstance(middleware[1], RetryHandler)
     assert isinstance(middleware[2], ParametersNameDecodingHandler)
     assert isinstance(middleware[3], UrlReplaceHandler)
+    assert isinstance(middleware[4], UserAgentHandler)
 
 
 def test_get_default_middleware_with_options():
@@ -72,7 +69,7 @@ def test_get_default_middleware_with_options():
 
     middleware = KiotaClientFactory.get_default_middleware(options=options)
 
-    assert len(middleware) == 4
+    assert len(middleware) == 5
     assert isinstance(middleware[0], RedirectHandler)
     assert middleware[0].options.should_redirect is False
     assert isinstance(middleware[1], RetryHandler)

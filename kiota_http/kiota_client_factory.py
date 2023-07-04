@@ -5,6 +5,9 @@ from typing import Dict, List, Optional
 import httpx
 from kiota_abstractions.request_option import RequestOption
 
+from kiota_http.middleware.options.user_agent_handler_option import UserAgentHandlerOption
+from kiota_http.middleware.user_agent_handler import UserAgentHandler
+
 from .middleware import (
     AsyncKiotaTransport,
     BaseMiddleware,
@@ -97,6 +100,7 @@ class KiotaClientFactory:
         retry_handler = RetryHandler()
         parameters_name_decoding_handler = ParametersNameDecodingHandler()
         url_replace_handler = UrlReplaceHandler()
+        user_agent_handler = UserAgentHandler()
 
         if options:
             redirect_handler_options = options.get(RedirectHandlerOption.get_key())
@@ -119,8 +123,13 @@ class KiotaClientFactory:
             if url_replace_handler_options:
                 url_replace_handler = UrlReplaceHandler(options=url_replace_handler_options)
 
+            user_agent_handler_options = options.get(UserAgentHandlerOption.get_key())
+            if user_agent_handler_options:
+                user_agent_handler = UserAgentHandler(options=user_agent_handler_options)
+
         middleware = [
-            redirect_handler, retry_handler, parameters_name_decoding_handler, url_replace_handler
+            redirect_handler, retry_handler, parameters_name_decoding_handler, url_replace_handler,
+            user_agent_handler
         ]
         return middleware
 

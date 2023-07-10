@@ -1,6 +1,6 @@
 -i https://pypi.org/simple
 
-astroid==2.15.5
+astroid==2.15.6
 
 asyncmock==0.4.2
 

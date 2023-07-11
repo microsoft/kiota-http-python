@@ -32,7 +32,7 @@ lazy-object-proxy==1.9.0
 
 mccabe==0.7.0
 
-mock==5.0.2
+mock==5.1.0
 
 mypy==1.4.1
 

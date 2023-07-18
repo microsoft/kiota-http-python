@@ -245,3 +245,12 @@ async def test_send_primitive_async_no_content(
     assert resp.headers.get("content-type") == 'application/json'
     final_result = await request_adapter.send_primitive_async(request_info, float, {})
     assert final_result is None
+
+
+@pytest.mark.asyncio
+async def test_convert_to_native_async(request_adapter, request_info):
+    request_info.http_method = Method.GET
+    request_info.url = BASE_URL
+    request_info.content = bytes('hello world', 'utf_8')
+    req = await request_adapter.convert_to_native_async(request_info)
+    assert isinstance(req, httpx.Request)

@@ -348,6 +348,6 @@ class HttpxRequestAdapter(RequestAdapter, Generic[ModelType]):
         request.options = request_info.request_options  # type:ignore
         return request
 
-    async def convert_to_native_async(self, request_info: RequestInformation)->httpx.Request:
+    async def convert_to_native_async(self, request_info: RequestInformation) -> httpx.Request:
         request = self.get_request_from_request_information(request_info)
         return request

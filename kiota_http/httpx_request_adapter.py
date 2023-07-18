@@ -92,14 +92,14 @@ class HttpxRequestAdapter(RequestAdapter, Generic[ModelType]):
         return segments[0]
 
     async def send_async(
-        self, request_info: RequestInformation, model_type: ParsableFactory,
+        self, request_info: RequestInformation, parsable_factory: ParsableFactory,
         error_map: Dict[str, ParsableFactory]
     ) -> Optional[ModelType]:
         """Excutes the HTTP request specified by the given RequestInformation and returns the
         deserialized response model.
         Args:
             request_info (RequestInformation): the request info to execute.
-            model_type (ParsableFactory): the class of the response model 
+            parsable_factory (ParsableFactory): the class of the response model 
             to deserialize the response into.
             error_map (Dict[str, ParsableFactory]): the error dict to use in
             case of a failed request.
@@ -120,18 +120,18 @@ class HttpxRequestAdapter(RequestAdapter, Generic[ModelType]):
         if self._should_return_none(response):
             return None
         root_node = await self.get_root_parse_node(response)
-        result = root_node.get_object_value(model_type)
+        result = root_node.get_object_value(parsable_factory)
         return result
 
     async def send_collection_async(
-        self, request_info: RequestInformation, model_type: ParsableFactory,
+        self, request_info: RequestInformation, parsable_factory: ParsableFactory,
         error_map: Dict[str, ParsableFactory]
     ) -> Optional[List[ModelType]]:
         """Excutes the HTTP request specified by the given RequestInformation and returns the
         deserialized response model collection.
         Args:
             request_info (RequestInformation): the request info to execute.
-            model_type (ParsableFactory): the class of the response model
+            parsable_factory (ParsableFactory): the class of the response model
             to deserialize the response into.
             error_map (Dict[str, ParsableFactory]): the error dict to use in
             case of a failed request.
@@ -151,7 +151,7 @@ class HttpxRequestAdapter(RequestAdapter, Generic[ModelType]):
         if self._should_return_none(response):
             return None
         root_node = await self.get_root_parse_node(response)
-        result = root_node.get_collection_of_object_values(model_type)
+        result = root_node.get_collection_of_object_values(parsable_factory)
         return result
 
     async def send_collection_of_primitive_async(

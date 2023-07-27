@@ -262,8 +262,8 @@ class HttpxRequestAdapter(RequestAdapter, Generic[ModelType]):
         )
         if not any([self._serialization_writer_factory, self._parse_node_factory]):
             raise Exception("Unable to enable backing store")
-        if backing_store_factory:
-            BackingStoreFactorySingleton.__instance = backing_store_factory
+        
+        BackingStoreFactorySingleton(backing_store_factory=backing_store_factory)
 
     async def get_root_parse_node(self, response: httpx.Response) -> ParseNode:
         payload = response.content

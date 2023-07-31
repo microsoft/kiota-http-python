@@ -8,5 +8,6 @@ class KiotaHTTPException(Exception):
 class BackingstoreException(KiotaHTTPException):
     """Raised for the backing store."""
 
+
 class DeserializationException(KiotaHTTPException):
     """Raised for deserialization."""

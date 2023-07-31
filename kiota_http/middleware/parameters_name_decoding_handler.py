@@ -66,6 +66,6 @@ class ParametersNameDecodingHandler(BaseMiddleware):
 
     def decode_uri_encoded_string(self, original: str) -> str:
         """Decodes a uri encoded string ."""
-        if '%' in original:
+        if original and '%' in original:
             return unquote(original)
         return original

@@ -25,7 +25,7 @@ class ParametersNameDecodingHandler(BaseMiddleware):
 
     async def send(
         self, request: httpx.Request, transport: httpx.AsyncBaseTransport
-    ) -> httpx.Response:  #type: ignore
+    ) -> httpx.Response:  # type: ignore
         """To execute the current middleware
 
         Args:
@@ -37,7 +37,7 @@ class ParametersNameDecodingHandler(BaseMiddleware):
         """
         current_options = self._get_current_options(request)
 
-        updated_url: str = str(request.url)  #type: ignore
+        updated_url: str = str(request.url)  # type: ignore
         if all(
             [
                 current_options, current_options.enabled, '%' in updated_url,
@@ -59,7 +59,13 @@ class ParametersNameDecodingHandler(BaseMiddleware):
         Returns:
             ParametersNameDecodingHandlerOption: The options to used.
         """
-        current_options =request.options.get( # type:ignore
+        current_options = request.options.get(  # type:ignore
             ParametersNameDecodingHandlerOption.get_key(), self.options
         )
         return current_options
+
+    def decode_uri_encoded_string(self, original: str) -> str:
+        """Decodes a uri encoded string ."""
+        if '%' in original:
+            return unquote(original)
+        return original

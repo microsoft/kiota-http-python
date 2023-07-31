@@ -26,7 +26,7 @@ from kiota_abstractions.store import BackingStoreFactory, BackingStoreFactorySin
 from opentelemetry import trace
 from opentelemetry.semconv.trace import SpanAttributes
 
-from kiota_http.exceptions import BackingstoreException, DeserializationException
+from kiota_http._exceptions import BackingstoreError, DeserializationError, RequestError
 from kiota_http.middleware.parameters_name_decoding_handler import ParametersNameDecodingHandler
 
 from ._version import VERSION
@@ -36,10 +36,12 @@ from .observability_options import ObservabilityOptions
 
 ResponseType = Union[str, int, float, bool, datetime, bytes]
 ModelType = TypeVar("ModelType", bound=Parsable)
+
 RESPONSE_HANDLER_EVENT_INVOKED_KEY = "response_handler_invoked"
 ERROR_MAPPING_FOUND_KEY = "com.microsoft.kiota.error.mapping_found"
 ERROR_BODY_FOUND_KEY = "com.microsoft.kiota.error.body_found"
 DESERIALIZED_MODEL_NAME_KEY = "com.microsoft.kiota.response.type"
+REQUEST_IS_NULL = RequestError("Request info cannot be null")
 
 tracer = trace.get_tracer(ObservabilityOptions.get_tracer_instrumentation_name(), VERSION)
 
@@ -152,9 +154,8 @@ class HttpxRequestAdapter(RequestAdapter, Generic[ModelType]):
         parent_span = self.start_tracing_span(request_info, "send_async")
         try:
             if not request_info:
-                exc = TypeError("Request info cannot be null")
-                parent_span.record_exception(exc)
-                raise exc
+                parent_span.record_exception(REQUEST_IS_NULL)
+                raise REQUEST_IS_NULL
 
             response = await self.get_http_response_message(request_info, parent_span)
 
@@ -196,9 +197,8 @@ class HttpxRequestAdapter(RequestAdapter, Generic[ModelType]):
         parent_span = self.start_tracing_span(request_info, "send_collection_async")
         try:
             if not request_info:
-                exc = TypeError("Request info cannot be null")
-                parent_span.record_exception(exc)
-                raise exc
+                parent_span.record_exception(REQUEST_IS_NULL)
+                raise REQUEST_IS_NULL
             response = await self.get_http_response_message(request_info, parent_span)
 
             response_handler = self.get_response_handler(request_info)
@@ -242,9 +242,8 @@ class HttpxRequestAdapter(RequestAdapter, Generic[ModelType]):
         parent_span = self.start_tracing_span(request_info, "send_collection_of_primitive_async")
         try:
             if not request_info:
-                exc = TypeError("Request info cannot be null")
-                parent_span.record_exception(exc)
-                raise exc
+                parent_span.record_exception(REQUEST_IS_NULL)
+                raise REQUEST_IS_NULL
 
             response = await self.get_http_response_message(request_info, parent_span)
 
@@ -290,9 +289,8 @@ class HttpxRequestAdapter(RequestAdapter, Generic[ModelType]):
         parent_span = self.start_tracing_span(request_info, "send_primitive_async")
         try:
             if not request_info:
-                exc = TypeError("Request info cannot be null")
-                parent_span.record_exception(exc)
-                raise exc
+                parent_span.record_exception(REQUEST_IS_NULL)
+                raise REQUEST_IS_NULL
 
             response = await self.get_http_response_message(request_info, parent_span)
 
@@ -345,9 +343,8 @@ class HttpxRequestAdapter(RequestAdapter, Generic[ModelType]):
         parent_span = self.start_tracing_span(request_info, "send_no_response_content_async")
         try:
             if not request_info:
-                exc = TypeError("Request info cannot be null")
-                parent_span.record_exception(exc)
-                raise exc
+                parent_span.record_exception(REQUEST_IS_NULL)
+                raise REQUEST_IS_NULL
 
             response = await self.get_http_response_message(request_info, parent_span)
 
@@ -374,7 +371,7 @@ class HttpxRequestAdapter(RequestAdapter, Generic[ModelType]):
             )
         )
         if not any([self._serialization_writer_factory, self._parse_node_factory]):
-            raise BackingstoreException("Unable to enable backing store")
+            raise BackingstoreError("Unable to enable backing store")
         if backing_store_factory:
             BackingStoreFactorySingleton.__instance = backing_store_factory
 
@@ -390,7 +387,7 @@ class HttpxRequestAdapter(RequestAdapter, Generic[ModelType]):
             payload = response.content
             response_content_type = self.get_response_content_type(response)
             if not response_content_type:
-                raise DeserializationException("No response content type found for deserialization")
+                raise DeserializationError("No response content type found for deserialization")
             return self._parse_node_factory.get_root_parse_node(response_content_type, payload)
         finally:
             span.end()

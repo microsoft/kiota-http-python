@@ -36,10 +36,12 @@ from .observability_options import ObservabilityOptions
 
 ResponseType = Union[str, int, float, bool, datetime, bytes]
 ModelType = TypeVar("ModelType", bound=Parsable)
+
 RESPONSE_HANDLER_EVENT_INVOKED_KEY = "response_handler_invoked"
 ERROR_MAPPING_FOUND_KEY = "com.microsoft.kiota.error.mapping_found"
 ERROR_BODY_FOUND_KEY = "com.microsoft.kiota.error.body_found"
 DESERIALIZED_MODEL_NAME_KEY = "com.microsoft.kiota.response.type"
+REQUEST_IS_NULL = RequestError("Request info cannot be null")
 
 tracer = trace.get_tracer(
     ObservabilityOptions.get_tracer_instrumentation_name(), VERSION)
@@ -392,7 +394,7 @@ class HttpxRequestAdapter(RequestAdapter, Generic[ModelType]):
             )
         )
         if not any([self._serialization_writer_factory, self._parse_node_factory]):
-            raise BackingstoreException("Unable to enable backing store")
+            raise BackingstoreError("Unable to enable backing store")
         if backing_store_factory:
             BackingStoreFactorySingleton(
                 backing_store_factory=backing_store_factory)
@@ -414,8 +416,7 @@ class HttpxRequestAdapter(RequestAdapter, Generic[ModelType]):
             payload = response.content
             response_content_type = self.get_response_content_type(response)
             if not response_content_type:
-                raise DeserializationError(
-                    "No response content type found for deserialization")
+                raise DeserializationError("No response content type found for deserialization")
             return self._parse_node_factory.get_root_parse_node(response_content_type, payload)
         finally:
             span.end()

@@ -41,8 +41,7 @@ ERROR_MAPPING_FOUND_KEY = "com.microsoft.kiota.error.mapping_found"
 ERROR_BODY_FOUND_KEY = "com.microsoft.kiota.error.body_found"
 DESERIALIZED_MODEL_NAME_KEY = "com.microsoft.kiota.response.type"
 
-tracer = trace.get_tracer(
-    ObservabilityOptions.get_tracer_instrumentation_name(), VERSION)
+tracer = trace.get_tracer(ObservabilityOptions.get_tracer_instrumentation_name(), VERSION)
 
 
 class HttpxRequestAdapter(RequestAdapter, Generic[ModelType]):
@@ -121,8 +120,7 @@ class HttpxRequestAdapter(RequestAdapter, Generic[ModelType]):
             The parent span.
         """
         name_handler = ParametersNameDecodingHandler()
-        uri_template = name_handler.decode_uri_encoded_string(
-            request_info.url_template)
+        uri_template = name_handler.decode_uri_encoded_string(request_info.url_template)
         parent_span_name = f"{method} - {uri_template}"
         span = tracer.start_span(parent_span_name)
         return span
@@ -169,11 +167,9 @@ class HttpxRequestAdapter(RequestAdapter, Generic[ModelType]):
             if self._should_return_none(response):
                 return None
             root_node = await self.get_root_parse_node(response, parent_span, parent_span)
-            _deserialized_span = self._start_local_tracing_span(
-                "get_object_value", parent_span)
+            _deserialized_span = self._start_local_tracing_span("get_object_value", parent_span)
             value = root_node.get_object_value(parsable_factory)
-            parent_span.set_attribute(
-                DESERIALIZED_MODEL_NAME_KEY, value.__class__.__name__)
+            parent_span.set_attribute(DESERIALIZED_MODEL_NAME_KEY, value.__class__.__name__)
             _deserialized_span.end()
             return value
         finally:
@@ -197,8 +193,7 @@ class HttpxRequestAdapter(RequestAdapter, Generic[ModelType]):
         Returns:
             ModelType: the deserialized response model collection.
         """
-        parent_span = self.start_tracing_span(
-            request_info, "send_collection_async")
+        parent_span = self.start_tracing_span(request_info, "send_collection_async")
         if not request_info:
             exc = TypeError("Request info cannot be null")
             parent_span.record_exception(exc)
@@ -215,11 +210,11 @@ class HttpxRequestAdapter(RequestAdapter, Generic[ModelType]):
             return None
 
         _deserialized_span = self._start_local_tracing_span(
-            "get_collection_of_object_values", parent_span)
+            "get_collection_of_object_values", parent_span
+        )
         root_node = await self.get_root_parse_node(response, parent_span, parent_span)
         result = root_node.get_collection_of_object_values(parsable_factory)
-        parent_span.set_attribute(
-            DESERIALIZED_MODEL_NAME_KEY, result.__class__.__name__)
+        parent_span.set_attribute(DESERIALIZED_MODEL_NAME_KEY, result.__class__.__name__)
         _deserialized_span.end()
         return result
 
@@ -346,15 +341,13 @@ class HttpxRequestAdapter(RequestAdapter, Generic[ModelType]):
         parent_span: trace.Span,
         attribute_span: trace.Span,
     ) -> ParseNode:
-        span = self._start_local_tracing_span(
-            "get_root_parse_node", parent_span)
+        span = self._start_local_tracing_span("get_root_parse_node", parent_span)
 
         try:
             payload = response.content
             response_content_type = self.get_response_content_type(response)
             if not response_content_type:
-                raise DeserializationException(
-                    "No response content type found for deserialization")
+                raise DeserializationException("No response content type found for deserialization")
             return self._parse_node_factory.get_root_parse_node(response_content_type, payload)
         finally:
             span.end()
@@ -383,10 +376,8 @@ class HttpxRequestAdapter(RequestAdapter, Generic[ModelType]):
             response_status_code_str = str(response_status_code)
             response_headers = response.headers
 
-            _throw_failed_resp_span.set_attribute(
-                "status", response_status_code)
-            _throw_failed_resp_span.set_attribute(
-                ERROR_MAPPING_FOUND_KEY, bool(error_map))
+            _throw_failed_resp_span.set_attribute("status", response_status_code)
+            _throw_failed_resp_span.set_attribute(ERROR_MAPPING_FOUND_KEY, bool(error_map))
             if not error_map:
                 exc = APIError(
                     "The server returned an unexpected status code and no error class is registered"
@@ -395,11 +386,9 @@ class HttpxRequestAdapter(RequestAdapter, Generic[ModelType]):
                     response_headers,
                 )
                 # set this or ignore as description in set_status?
-                _throw_failed_resp_span.set_attribute(
-                    "status_message", "received_error_response")
+                _throw_failed_resp_span.set_attribute("status_message", "received_error_response")
                 # TODO: set status for just this span or the parent as well?
-                _throw_failed_resp_span.set_status(
-                    trace.StatusCode.ERROR, str(exc))
+                _throw_failed_resp_span.set_status(trace.StatusCode.ERROR, str(exc))
                 attribute_span.record_exception(exc)
                 raise exc
 
@@ -415,8 +404,7 @@ class HttpxRequestAdapter(RequestAdapter, Generic[ModelType]):
                 )
                 attribute_span.record_exception(exc)
                 raise exc
-            _throw_failed_resp_span.set_attribute(
-                "status_message", "received_error_response")
+            _throw_failed_resp_span.set_attribute("status_message", "received_error_response")
 
             error_class = None
             if response_status_code_str in error_map:
@@ -432,8 +420,7 @@ class HttpxRequestAdapter(RequestAdapter, Generic[ModelType]):
             attribute_span.set_attribute(ERROR_BODY_FOUND_KEY, bool(root_node))
 
             _get_obj_ctx = trace.set_span_in_context(_throw_failed_resp_span)
-            _get_obj_span = tracer.start_span(
-                "get_object_value", context=_get_obj_ctx)
+            _get_obj_span = tracer.start_span("get_object_value", context=_get_obj_ctx)
 
             error = root_node.get_object_value(error_class)
             if isinstance(error, APIError):
@@ -464,24 +451,20 @@ class HttpxRequestAdapter(RequestAdapter, Generic[ModelType]):
             request_info, _get_http_resp_span, parent_span
         )
         resp = await self._http_client.send(request)
-        parent_span.set_attribute(
-            SpanAttributes.HTTP_STATUS_CODE, resp.status_code)
+        parent_span.set_attribute(SpanAttributes.HTTP_STATUS_CODE, resp.status_code)
         if http_version := resp.http_version:
             parent_span.set_attribute(SpanAttributes.HTTP_FLAVOR, http_version)
 
         if content_length := resp.headers.get("Content-Length", None):
-            parent_span.set_attribute(
-                SpanAttributes.HTTP_RESPONSE_CONTENT_LENGTH, content_length)
+            parent_span.set_attribute(SpanAttributes.HTTP_RESPONSE_CONTENT_LENGTH, content_length)
 
         if content_type := resp.headers.get("Content-Type", None):
-            parent_span.set_attribute(
-                "http.response_content_type", content_type)
+            parent_span.set_attribute("http.response_content_type", content_type)
         _get_http_resp_span.end()
         return resp
 
     def get_response_handler(self, request_info: RequestInformation) -> Any:
-        response_handler_option = request_info.request_options.get(
-            ResponseHandlerOption.get_key())
+        response_handler_option = request_info.request_options.get(ResponseHandlerOption.get_key())
         if response_handler_option:
             return response_handler_option.response_handler
         return None
@@ -524,8 +507,7 @@ class HttpxRequestAdapter(RequestAdapter, Generic[ModelType]):
         request.options.update(**request_options)  # type:ignore
 
         if content_length := request.headers.get("Content-Length", None):
-            otel_attributes.update(
-                {SpanAttributes.HTTP_REQUEST_CONTENT_LENGTH: content_length})
+            otel_attributes.update({SpanAttributes.HTTP_REQUEST_CONTENT_LENGTH: content_length})
 
         if content_type := request.headers.get("Content-Type", None):
             otel_attributes.update({"http.request_content_type": content_type})

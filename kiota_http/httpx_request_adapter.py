@@ -558,10 +558,18 @@ class HttpxRequestAdapter(RequestAdapter, Generic[ModelType]):
         return request
 
     async def convert_to_native_async(self, request_info: RequestInformation) -> httpx.Request:
-        if request_info is None:
-            raise ValueError("request information must be provided")
+        parent_span = self.start_tracing_span(request_info, "convert_to_native_async")
+        try:
+            if request_info is None:
+                exc = ValueError("request information must be provided")
+                parent_span.record_exception(exc)
+                raise exc
 
-        await self._authentication_provider.authenticate_request(request_info)
+            await self._authentication_provider.authenticate_request(request_info)
 
-        request = self.get_request_from_request_information(request_info)
-        return request
+            request = self.get_request_from_request_information(
+                request_info, parent_span, parent_span
+            )
+            return request
+        finally:
+            parent_span.end()

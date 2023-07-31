@@ -194,29 +194,32 @@ class HttpxRequestAdapter(RequestAdapter, Generic[ModelType]):
             ModelType: the deserialized response model collection.
         """
         parent_span = self.start_tracing_span(request_info, "send_collection_async")
-        if not request_info:
-            exc = TypeError("Request info cannot be null")
-            parent_span.record_exception(exc)
-            raise exc
-        response = await self.get_http_response_message(request_info, parent_span)
+        try:
+            if not request_info:
+                exc = TypeError("Request info cannot be null")
+                parent_span.record_exception(exc)
+                raise exc
+            response = await self.get_http_response_message(request_info, parent_span)
 
-        response_handler = self.get_response_handler(request_info)
-        if response_handler:
-            parent_span.add_event(RESPONSE_HANDLER_EVENT_INVOKED_KEY)
-            return await response_handler.handle_response_async(response, error_map)
+            response_handler = self.get_response_handler(request_info)
+            if response_handler:
+                parent_span.add_event(RESPONSE_HANDLER_EVENT_INVOKED_KEY)
+                return await response_handler.handle_response_async(response, error_map)
 
-        await self.throw_failed_responses(response, error_map, parent_span, parent_span)
-        if self._should_return_none(response):
-            return None
+            await self.throw_failed_responses(response, error_map, parent_span, parent_span)
+            if self._should_return_none(response):
+                return None
 
-        _deserialized_span = self._start_local_tracing_span(
-            "get_collection_of_object_values", parent_span
-        )
-        root_node = await self.get_root_parse_node(response, parent_span, parent_span)
-        result = root_node.get_collection_of_object_values(parsable_factory)
-        parent_span.set_attribute(DESERIALIZED_MODEL_NAME_KEY, result.__class__.__name__)
-        _deserialized_span.end()
-        return result
+            _deserialized_span = self._start_local_tracing_span(
+                "get_collection_of_object_values", parent_span
+            )
+            root_node = await self.get_root_parse_node(response, parent_span, parent_span)
+            result = root_node.get_collection_of_object_values(parsable_factory)
+            parent_span.set_attribute(DESERIALIZED_MODEL_NAME_KEY, result.__class__.__name__)
+            _deserialized_span.end()
+            return result
+        finally:
+            parent_span.end()
 
     async def send_collection_of_primitive_async(
         self,

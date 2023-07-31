@@ -339,16 +339,23 @@ class HttpxRequestAdapter(RequestAdapter, Generic[ModelType]):
             error_map (Dict[str, ParsableFactory]): the error dict to use in case
             of a failed request.
         """
-        if not request_info:
-            raise TypeError("Request info cannot be null")
+        parent_span = self.start_tracing_span(request_info, "send_no_response_content_async")
+        try:
+            if not request_info:
+                exc = TypeError("Request info cannot be null")
+                parent_span.record_exception(exc)
+                raise exc
 
-        response = await self.get_http_response_message(request_info)
+            response = await self.get_http_response_message(request_info, parent_span)
 
-        response_handler = self.get_response_handler(request_info)
-        if response_handler:
-            return await response_handler.handle_response_async(response, error_map)
+            response_handler = self.get_response_handler(request_info)
+            if response_handler:
+                parent_span.add_event(RESPONSE_HANDLER_EVENT_INVOKED_KEY)
+                return await response_handler.handle_response_async(response, error_map)
 
-        await self.throw_failed_responses(response, error_map)
+            await self.throw_failed_responses(response, error_map, parent_span, parent_span)
+        finally:
+            parent_span.end()
 
     def enable_backing_store(self, backing_store_factory: Optional[BackingStoreFactory]) -> None:
         """Enables the backing store proxies for the SerializationWriters and ParseNodes in use.

@@ -284,32 +284,50 @@ class HttpxRequestAdapter(RequestAdapter, Generic[ModelType]):
         Returns:
             ResponseType: the deserialized primitive response model.
         """
-        if not request_info:
-            raise TypeError("Request info cannot be null")
+        parent_span = self.start_tracing_span(request_info, "send_primitive_async")
+        try:
+            if not request_info:
+                exc = TypeError("Request info cannot be null")
+                parent_span.record_exception(exc)
+                raise exc
 
-        response = await self.get_http_response_message(request_info)
+            response = await self.get_http_response_message(request_info, parent_span)
 
-        response_handler = self.get_response_handler(request_info)
-        if response_handler:
-            return await response_handler.handle_response_async(response, error_map)
+            response_handler = self.get_response_handler(request_info)
+            if response_handler:
+                parent_span.add_event(RESPONSE_HANDLER_EVENT_INVOKED_KEY)
+                return await response_handler.handle_response_async(response, error_map)
 
-        await self.throw_failed_responses(response, error_map)
-        if self._should_return_none(response):
-            return None
-        if response_type == "bytes":
-            return response.content
-        root_node = await self.get_root_parse_node(response)
-        if response_type == "str":
-            return root_node.get_str_value()
-        if response_type == "int":
-            return root_node.get_int_value()
-        if response_type == "float":
-            return root_node.get_float_value()
-        if response_type == "bool":
-            return root_node.get_bool_value()
-        if response_type == "datetime":
-            return root_node.get_datetime_value()
-        raise TypeError(f"Unable to deserialize type: {response_type!r}")
+            await self.throw_failed_responses(response, error_map, parent_span, parent_span)
+            if self._should_return_none(response):
+                return None
+            if response_type == "bytes":
+                return response.content
+            _deserialized_span = self._start_local_tracing_span("get_root_parse_node", parent_span)
+            root_node = await self.get_root_parse_node(response, parent_span, parent_span)
+            value = None
+            if response_type == "str":
+                value = root_node.get_str_value()
+            if response_type == "int":
+                value = root_node.get_int_value()
+            if response_type == "float":
+                value = root_node.get_float_value()
+            if response_type == "bool":
+                value = root_node.get_bool_value()
+            if response_type == "datetime":
+                value = root_node.get_datetime_value()
+            if value:
+                parent_span.set_attribute(DESERIALIZED_MODEL_NAME_KEY, value.__class__.__name__)
+                _deserialized_span.end()
+                return value
+
+            exc = TypeError(f"Unable to deserialize type: {response_type!r}")
+            parent_span.record_exception(exc)
+            _deserialized_span.end()
+            raise exc
+
+        finally:
+            parent_span.end()
 
     async def send_no_response_content_async(
         self, request_info: RequestInformation, error_map: Dict[str, ParsableFactory]

@@ -101,8 +101,8 @@ class RetryHandler(BaseMiddleware):
                 _retry_span.set_attribute(SpanAttributes.HTTP_RETRY_COUNT, retry_count)
                 continue
             break
-            if response is None:
-                response = await super().send(request, transport)
+        if response is None:
+            response = await super().send(request, transport)
         _retry_span.end()
         return response
 

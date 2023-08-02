@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 import httpx
 import pytest
 from asyncmock import AsyncMock
@@ -8,6 +10,7 @@ from kiota_abstractions.serialization import (
     ParseNodeFactoryRegistry,
     SerializationWriterFactoryRegistry,
 )
+from opentelemetry import trace
 
 from kiota_http.httpx_request_adapter import HttpxRequestAdapter
 from kiota_http.middleware.options import ResponseHandlerOption
@@ -265,3 +268,19 @@ async def test_convert_to_native_async(request_adapter, request_info):
     request_info.content = bytes('hello world', 'utf_8')
     req = await request_adapter.convert_to_native_async(request_info)
     assert isinstance(req, httpx.Request)
+
+@pytest.mark.asyncio
+async def test_observability(request_adapter, request_info, mock_user_response, mock_user):
+    """Ensures the otel tracer and created spans are set and called correctly."""
+    request_adapter.get_http_response_message = AsyncMock(return_value=mock_user_response)
+    request_adapter.get_root_parse_node = AsyncMock(return_value=mock_user)
+    resp = await request_adapter.get_http_response_message(request_info)
+    assert resp.headers.get("content-type") == 'application/json'
+
+    with patch("kiota_http.httpx_request_adapter.HttpxRequestAdapter.start_tracing_span") as start_tracing_span:
+        final_result = await request_adapter.send_async(request_info, MockResponseObject, {})
+        assert start_tracing_span is not None
+        # check if the send_async span is created
+        start_tracing_span.assert_called_once_with(request_info, "send_async")
+    assert final_result.display_name == mock_user.display_name
+    assert not trace.get_current_span().is_recording()

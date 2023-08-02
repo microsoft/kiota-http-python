@@ -6,9 +6,15 @@ from typing import FrozenSet, Set, Type
 
 import httpx
 from kiota_abstractions.request_option import RequestOption
+from opentelemetry import trace
+from opentelemetry.semconv.trace import SpanAttributes
 
+from .._version import VERSION
+from ..observability_options import ObservabilityOptions
 from .middleware import BaseMiddleware
 from .options import RetryHandlerOption
+
+tracer = trace.get_tracer(ObservabilityOptions.get_tracer_instrumentation_name(), VERSION)
 
 
 class RetryHandler(BaseMiddleware):
@@ -66,36 +72,49 @@ class RetryHandler(BaseMiddleware):
         """
         Sends the http request object to the next middleware or retries the request if necessary.
         """
-        current_options = self._get_current_options(request)
         response = None
         retry_count = 0
-        retry_valid = current_options.should_retry
 
-        while retry_valid:
-            start_time = time.time()
-            if retry_count > 0:
-                request.headers.update({'retry-attempt': f'{retry_count}'})
-            response = await super().send(request, transport)
-            # Check if the request needs to be retried based on the response method
-            # and status code
-            if self.should_retry(request, current_options, response):
-                # check that max retries has not been hit
-                retry_valid = self.check_retry_valid(retry_count, current_options)
+        if options := getattr(request, "options", None):
+            if parent_span := options.get("parent_span", None):
+                _context = trace.set_span_in_context(parent_span)
+                _enable_span = tracer.start_span("retry_handler_send", _context)
+                current_options = self._get_current_options(request)
+                _enable_span.set_attribute("com.microsoft.kiota.handler.retry.enable", True)
+                _enable_span.end()
+                retry_valid = current_options.should_retry
+                _retry_span = tracer.start_span(
+                    f"retry_handler_send - attempt {retry_count}", _context
+                )
+                while retry_valid:
+                    start_time = time.time()
+                    if retry_count > 0:
+                        request.headers.update({'retry-attempt': f'{retry_count}'})
+                    response = await super().send(request, transport)
+                    # Check if the request needs to be retried based on the response method
+                    # and status code
+                    if self.should_retry(request, current_options, response):
+                        # check that max retries has not been hit
+                        retry_valid = self.check_retry_valid(retry_count, current_options)
 
-                # Get the delay time between retries
-                delay = self.get_delay_time(retry_count, response)
+                        # Get the delay time between retries
+                        delay = self.get_delay_time(retry_count, response)
 
-                if retry_valid and delay < current_options.max_delay:
-                    time.sleep(delay)
-                    end_time = time.time()
-                    current_options.max_delay -= (end_time - start_time)
-                    # increment the count for retries
-                    retry_count += 1
-
-                    continue
-            break
-        if response is None:
-            response = await super().send(request, transport)
+                        if retry_valid and delay < current_options.max_delay:
+                            time.sleep(delay)
+                            end_time = time.time()
+                            current_options.max_delay -= (end_time - start_time)
+                            # increment the count for retries
+                            retry_count += 1
+                            _retry_span.set_attribute(SpanAttributes.HTTP_RETRY_COUNT, retry_count)
+                            continue
+                    break
+                    if response is None:
+                        response = await super().send(request, transport)
+                        _retry_span.set_attributes(
+                            SpanAttributes.HTTP_STATUS_CODE, response.status_code
+                        )
+                _retry_span.end()
         return response
 
     def _get_current_options(self, request: httpx.Request) -> RetryHandlerOption:

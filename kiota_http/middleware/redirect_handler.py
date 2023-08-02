@@ -71,14 +71,14 @@ class RedirectHandler(BaseMiddleware):
         if options := getattr(request, "options", None):
             if parent_span := options.get("parent_span", None):
                 _context = trace.set_span_in_context(parent_span)
-                _enable_span = tracer.start_span("redirect_handler_send", _context)
+                _enable_span = tracer.start_span("RedirectHandler_send", _context)
                 current_options = self._get_current_options(request)
                 _enable_span.set_attribute(REDIRECT_ENABLE_KEY, True)
                 _enable_span.end()
 
                 retryable = True
                 _redirect_span = tracer.start_span(
-                    f"redirect_handler_send - redirect {len(self.history)}", _context
+                    f"RedirectHandler_send - redirect {len(self.history)}", _context
                 )
                 while retryable:
                     response = await super().send(request, transport)

@@ -78,13 +78,13 @@ class RetryHandler(BaseMiddleware):
         if options := getattr(request, "options", None):
             if parent_span := options.get("parent_span", None):
                 _context = trace.set_span_in_context(parent_span)
-                _enable_span = tracer.start_span("retry_handler_send", _context)
+                _enable_span = tracer.start_span("RetryHandler_send", _context)
                 current_options = self._get_current_options(request)
                 _enable_span.set_attribute("com.microsoft.kiota.handler.retry.enable", True)
                 _enable_span.end()
                 retry_valid = current_options.should_retry
                 _retry_span = tracer.start_span(
-                    f"retry_handler_send - attempt {retry_count}", _context
+                    f"RetryHandler_send - attempt {retry_count}", _context
                 )
                 while retry_valid:
                     start_time = time.time()

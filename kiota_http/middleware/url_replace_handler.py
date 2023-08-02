@@ -40,7 +40,7 @@ class UrlReplaceHandler(BaseMiddleware):
         if options := getattr(request, "options", None):
             if parent_span := options.get("parent_span", None):
                 _context = trace.set_span_in_context(parent_span)
-                _enable_span = tracer.start_span("url_replace_handler_send", _context)
+                _enable_span = tracer.start_span("UrlReplaceHandler_send", _context)
                 _enable_span.set_attribute("com.microsoft.kiota.handler.url_replacer.enable", True)
                 current_options = self._get_current_options(request)
 

@@ -542,9 +542,9 @@ class HttpxRequestAdapter(RequestAdapter, Generic[ModelType]):
         request_options = {
             self.observability_options.get_key(): self.observability_options,
             "parent_span": parent_span,
+            **request_info.request_options
         }
-        request.options = request_info.request_options  # type:ignore
-        request.options.update(**request_options)  # type:ignore
+        setattr(request, 'options', request_options)
 
         if content_length := request.headers.get("Content-Length", None):
             otel_attributes.update({SpanAttributes.HTTP_REQUEST_CONTENT_LENGTH: content_length})

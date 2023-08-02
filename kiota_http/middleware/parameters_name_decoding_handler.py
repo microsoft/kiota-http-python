@@ -2,14 +2,10 @@ from urllib.parse import unquote
 
 import httpx
 from kiota_abstractions.request_option import RequestOption
-from opentelemetry import trace
 
-from .._version import VERSION
-from ..observability_options import ObservabilityOptions
 from .middleware import BaseMiddleware
 from .options import ParametersNameDecodingHandlerOption
 
-tracer = trace.get_tracer(ObservabilityOptions.get_tracer_instrumentation_name(), VERSION)
 PARAMETERS_NAME_DECODING_KEY = "com.microsoft.kiota.handler.parameters_name_decoding.enable"
 
 
@@ -42,12 +38,9 @@ class ParametersNameDecodingHandler(BaseMiddleware):
             Response: The response object.
         """
         current_options = self._get_current_options(request)
-        if options := getattr(request, "options", None):
-            if parent_span := options.get("parent_span", None):
-                _context = trace.set_span_in_context(parent_span)
-                span = tracer.start_span("ParametersNameDecodingHandler_send", context=_context)
-                span.set_attribute(PARAMETERS_NAME_DECODING_KEY, current_options.enabled)
-                span.end()
+        span = self._create_observability_span(request, "ParametersNameDecodingHandler_send")
+        span.set_attribute(PARAMETERS_NAME_DECODING_KEY, current_options.enabled)
+        span.end()
 
         updated_url: str = str(request.url)  # type: ignore
         if all(

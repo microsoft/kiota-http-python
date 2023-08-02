@@ -1,14 +1,9 @@
 import httpx
 from kiota_abstractions.request_option import RequestOption
-from opentelemetry import trace
 from opentelemetry.semconv.trace import SpanAttributes
 
-from .._version import VERSION
-from ..observability_options import ObservabilityOptions
 from .middleware import BaseMiddleware
 from .options import UrlReplaceHandlerOption
-
-tracer = trace.get_tracer(ObservabilityOptions.get_tracer_instrumentation_name(), VERSION)
 
 
 class UrlReplaceHandler(BaseMiddleware):
@@ -36,20 +31,17 @@ class UrlReplaceHandler(BaseMiddleware):
         Returns:
             Response: The response object.
         """
-        response: httpx.Response
-        if options := getattr(request, "options", None):
-            if parent_span := options.get("parent_span", None):
-                _context = trace.set_span_in_context(parent_span)
-                _enable_span = tracer.start_span("UrlReplaceHandler_send", _context)
-                _enable_span.set_attribute("com.microsoft.kiota.handler.url_replacer.enable", True)
-                current_options = self._get_current_options(request)
+        response = None
+        _enable_span = self._create_observability_span(request, "UrlReplaceHandler_send")
+        _enable_span.set_attribute("com.microsoft.kiota.handler.url_replacer.enable", True)
+        current_options = self._get_current_options(request)
 
-                url_string: str = str(request.url)  #type: ignore
-                url_string = self.replace_url_segment(url_string, current_options)
-                request.url = httpx.URL(url_string)
-                _enable_span.set_attribute(SpanAttributes.HTTP_URL, str(request.url))
-                response = await super().send(request, transport)
-                _enable_span.end()
+        url_string: str = str(request.url)  #type: ignore
+        url_string = self.replace_url_segment(url_string, current_options)
+        request.url = httpx.URL(url_string)
+        _enable_span.set_attribute(SpanAttributes.HTTP_URL, str(request.url))
+        response = await super().send(request, transport)
+        _enable_span.end()
         return response
 
     def _get_current_options(self, request: httpx.Request) -> UrlReplaceHandlerOption:

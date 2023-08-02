@@ -52,6 +52,7 @@ class BaseMiddleware():
 
     def __init__(self):
         self.next = None
+        self.parent_span = None
 
     async def send(self, request, transport):
         if self.next is None:
@@ -69,6 +70,7 @@ class BaseMiddleware():
         _span = None
         if options := getattr(request, "options", None):
             if parent_span := options.get("parent_span", None):
+                self.parent_span = parent_span
                 _context = trace.set_span_in_context(parent_span)
                 _span = tracer.start_span(span_name, _context)
         if _span is None:

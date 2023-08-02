@@ -15,3 +15,7 @@ class DeserializationError(KiotaHTTPXError):
 
 class RequestError(KiotaHTTPXError):
     """Raised for request building errors."""
+
+
+class RedirectError(KiotaHTTPXError):
+    """Raised when a redirect has errors."""

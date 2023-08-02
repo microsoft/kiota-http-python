@@ -2,9 +2,17 @@ import typing
 
 import httpx
 from kiota_abstractions.request_option import RequestOption
+from opentelemetry import trace
+from opentelemetry.semconv.trace import SpanAttributes
 
+from .._exceptions import RedirectError
+from .._version import VERSION
+from ..observability_options import ObservabilityOptions
 from .middleware import BaseMiddleware
 from .options import RedirectHandlerOption
+
+RETRY_ENABLE_KEY = "com.microsoft.kiota.handler.retry.enable"
+tracer = trace.get_tracer(ObservabilityOptions.get_tracer_instrumentation_name(), VERSION)
 
 
 class RedirectHandler(BaseMiddleware):
@@ -59,23 +67,35 @@ class RedirectHandler(BaseMiddleware):
         """Sends the http request object to the next middleware or redirects
         the request if necessary.
         """
-        current_options = self._get_current_options(request)
+        if options := getattr(request, "options", None):
+            if parent_span := options.get("parent_span", None):
+                _context = trace.set_span_in_context(parent_span)
+                _enable_span = tracer.start_span("redirect_handler_send", _context)
+                current_options = self._get_current_options(request)
+                _enable_span.set_attribute(RETRY_ENABLE_KEY, True)
+                _enable_span.end()
 
-        retryable = True
-        while retryable:
-            response = await super().send(request, transport)
-            redirect_location = self.get_redirect_location(response)
-            if redirect_location and current_options.should_redirect:
-                current_options.max_redirect -= 1
-                retryable = self.increment(response, current_options.max_redirect)
-                new_request = self._build_redirect_request(request, response)
-                request = new_request
-                continue
-
-            response.history = self.history
-            return response
-
-        raise Exception(f"Too many redirects. {response.history}")
+                retryable = True
+                _retry_span = tracer.start_span(
+                    f"redirect_handler_send - attempt {len(self.history)}", _context
+                )
+                while retryable:
+                    _retry_span.set_attribute(SpanAttributes.HTTP_RETRY_COUNT, len(self.history))
+                    response = await super().send(request, transport)
+                    _retry_span.set_attribute(SpanAttributes.HTTP_STATUS_CODE, response.status_code)
+                    redirect_location = self.get_redirect_location(response)
+                    if redirect_location and current_options.should_redirect:
+                        current_options.max_redirect -= 1
+                        retryable = self.increment(response, current_options.max_redirect)
+                        new_request = self._build_redirect_request(request, response)
+                        request = new_request
+                        continue
+                    response.history = self.history
+                    _retry_span.end()
+                exc = RedirectError(f"Too many redirects. {response.history}")
+                parent_span.record_exception(exc)
+                raise exc
+        return response
 
     def _get_current_options(self, request: httpx.Request) -> RedirectHandlerOption:
         """Returns the options to use for the request.Overries default options if

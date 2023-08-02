@@ -11,7 +11,8 @@ from ..observability_options import ObservabilityOptions
 from .middleware import BaseMiddleware
 from .options import RedirectHandlerOption
 
-RETRY_ENABLE_KEY = "com.microsoft.kiota.handler.retry.enable"
+REDIRECT_ENABLE_KEY = "com.microsoft.kiota.handler.redirect.enable"
+REDIRECT_COUNT_KEY = "com.microsoft.kiota.handler.redirect.count"
 tracer = trace.get_tracer(ObservabilityOptions.get_tracer_instrumentation_name(), VERSION)
 
 
@@ -72,26 +73,26 @@ class RedirectHandler(BaseMiddleware):
                 _context = trace.set_span_in_context(parent_span)
                 _enable_span = tracer.start_span("redirect_handler_send", _context)
                 current_options = self._get_current_options(request)
-                _enable_span.set_attribute(RETRY_ENABLE_KEY, True)
+                _enable_span.set_attribute(REDIRECT_ENABLE_KEY, True)
                 _enable_span.end()
 
                 retryable = True
-                _retry_span = tracer.start_span(
-                    f"redirect_handler_send - attempt {len(self.history)}", _context
+                _redirect_span = tracer.start_span(
+                    f"redirect_handler_send - redirect {len(self.history)}", _context
                 )
                 while retryable:
-                    _retry_span.set_attribute(SpanAttributes.HTTP_RETRY_COUNT, len(self.history))
                     response = await super().send(request, transport)
-                    _retry_span.set_attribute(SpanAttributes.HTTP_STATUS_CODE, response.status_code)
+                    _redirect_span.set_attribute(SpanAttributes.HTTP_STATUS_CODE, response.status_code)
                     redirect_location = self.get_redirect_location(response)
                     if redirect_location and current_options.should_redirect:
                         current_options.max_redirect -= 1
                         retryable = self.increment(response, current_options.max_redirect)
+                        _redirect_span.set_attribute(REDIRECT_COUNT_KEY, len(self.history))
                         new_request = self._build_redirect_request(request, response)
                         request = new_request
                         continue
                     response.history = self.history
-                    _retry_span.end()
+                    _redirect_span.end()
                 exc = RedirectError(f"Too many redirects. {response.history}")
                 parent_span.record_exception(exc)
                 raise exc

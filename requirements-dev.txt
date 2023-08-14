@@ -10,7 +10,7 @@ charset-normalizer==3.2.0
 
 colorama==0.4.6
 
-coverage[toml]==7.2.7
+coverage[toml]==7.3.0
 
 dill==0.3.7
 

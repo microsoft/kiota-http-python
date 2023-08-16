@@ -32,18 +32,15 @@ class UrlReplaceHandler(BaseMiddleware):
             Response: The response object.
         """
         response = None
-        _enable_span = self._create_observability_span(
-            request, "UrlReplaceHandler_send")
+        _enable_span = self._create_observability_span(request, "UrlReplaceHandler_send")
         if self.options and self.options.is_enabled:
-            _enable_span.set_attribute(
-                "com.microsoft.kiota.handler.url_replacer.enable", True)
+            _enable_span.set_attribute("com.microsoft.kiota.handler.url_replacer.enable", True)
             current_options = self._get_current_options(request)
 
             url_string: str = str(request.url)  # type: ignore
             url_string = self.replace_url_segment(url_string, current_options)
             request.url = httpx.URL(url_string)
-            _enable_span.set_attribute(
-                SpanAttributes.HTTP_URL, str(request.url))
+            _enable_span.set_attribute(SpanAttributes.HTTP_URL, str(request.url))
         response = await super().send(request, transport)
         _enable_span.end()
         return response

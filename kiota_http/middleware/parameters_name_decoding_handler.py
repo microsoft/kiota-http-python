@@ -38,11 +38,9 @@ class ParametersNameDecodingHandler(BaseMiddleware):
             Response: The response object.
         """
         current_options = self._get_current_options(request)
-        span = self._create_observability_span(
-            request, "ParametersNameDecodingHandler_send")
+        span = self._create_observability_span(request, "ParametersNameDecodingHandler_send")
         if current_options.enabled:
-            span.set_attribute(PARAMETERS_NAME_DECODING_KEY,
-                               current_options.enabled)
+            span.set_attribute(PARAMETERS_NAME_DECODING_KEY, current_options.enabled)
         span.end()
 
         updated_url: str = str(request.url)  # type: ignore

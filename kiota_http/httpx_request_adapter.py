@@ -396,8 +396,7 @@ class HttpxRequestAdapter(RequestAdapter, Generic[ModelType]):
         if not any([self._serialization_writer_factory, self._parse_node_factory]):
             raise BackingstoreError("Unable to enable backing store")
         if backing_store_factory:
-            BackingStoreFactorySingleton(
-                backing_store_factory=backing_store_factory)
+            BackingStoreFactorySingleton(backing_store_factory=backing_store_factory)
 
         if backing_store_factory:
             BackingStoreFactorySingleton(

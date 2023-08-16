@@ -383,9 +383,6 @@ class HttpxRequestAdapter(RequestAdapter, Generic[ModelType]):
         if backing_store_factory:
             BackingStoreFactorySingleton(backing_store_factory=backing_store_factory)
 
-        if backing_store_factory:
-            BackingStoreFactorySingleton(backing_store_factory=backing_store_factory)
-
     async def get_root_parse_node(
         self,
         response: httpx.Response,

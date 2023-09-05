@@ -31,7 +31,7 @@ ModelType = TypeVar("ModelType", bound=Parsable)
 
 
 class HttpxRequestAdapter(RequestAdapter, Generic[ModelType]):
-    
+
     CLAIMS_KEY = "claims"
     BEARER_AUTHENTICATION_SCHEME = "Bearer"
     RESPONSE_AUTH_HEADER = "WWW-Authenticate"
@@ -324,36 +324,44 @@ class HttpxRequestAdapter(RequestAdapter, Generic[ModelType]):
         raise APIError(
             f"Unexpected error type: {type(error)}", response_status_code, response_headers
         )
-    
-    async def get_http_response_message(self, request_info: RequestInformation, claims: str = "") -> httpx.Response:
+
+    async def get_http_response_message(
+        self, request_info: RequestInformation, claims: str = ""
+    ) -> httpx.Response:
         self.set_base_url_for_request_information(request_info)
-        
+
         additional_authentication_context = None
         if claims:
             additional_authentication_context = {self.CLAIMS_KEY: claims}
 
-        await self._authentication_provider.authenticate_request(request_info, additional_authentication_context)
+        await self._authentication_provider.authenticate_request(
+            request_info, additional_authentication_context
+        )
 
         request = self.get_request_from_request_information(request_info)
         resp = await self._http_client.send(request)
         return await self.retry_cae_response_if_required(resp, request_info, claims)
-    
-    async def retry_cae_response_if_required(self, resp: httpx.Response, request_info: RequestInformation, claims: str) -> httpx.Response:
+
+    async def retry_cae_response_if_required(
+        self, resp: httpx.Response, request_info: RequestInformation, claims: str
+    ) -> httpx.Response:
         if (
             resp.status_code == 401
-            and not claims # previous claims exist. Means request has already been retried
+            and not claims  # previous claims exist. Means request has already been retried
             and resp.headers.get(self.RESPONSE_AUTH_HEADER)
         ):
-            if isinstance(request_info.content, Iterable) or isinstance(request_info.content, AsyncIterable):
-                auth_header_value = resp.headers.get(self.RESPONSE_AUTH_HEADER)
-                if auth_header_value.casefold().startswith(self.BEARER_AUTHENTICATION_SCHEME.casefold()):
-                    claims_match =  re.search('claims="(.+)"', auth_header_value)
-                    response_claims = claims_match.group().split('="')[1]
-                    return await self.get_http_response_message(request_info, response_claims)
-                return resp
+            auth_header_value = resp.headers.get(self.RESPONSE_AUTH_HEADER)
+            if auth_header_value.casefold().startswith(
+                self.BEARER_AUTHENTICATION_SCHEME.casefold()
+            ):
+                claims_match = re.search('claims="(.+)"', auth_header_value)
+                if not claims_match:
+                    raise ValueError("Unable to parse claims from response")
+                response_claims = claims_match.group().split('="')[1]
+                return await self.get_http_response_message(request_info, response_claims)
             return resp
         return resp
-            
+
     def get_response_handler(self, request_info: RequestInformation) -> Any:
         response_handler_option = request_info.request_options.get(ResponseHandlerOption.get_key())
         if response_handler_option:

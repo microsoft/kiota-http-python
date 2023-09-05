@@ -2,8 +2,6 @@
 
 astroid==2.15.6
 
-asyncmock==0.4.2
-
 certifi==2023.7.22
 
 charset-normalizer==3.2.0

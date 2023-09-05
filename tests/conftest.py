@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 import httpx
 import pytest
-from asyncmock import AsyncMock
+from unittest.mock import AsyncMock
 from kiota_abstractions.api_error import APIError
 from kiota_abstractions.method import Method
 from kiota_abstractions.authentication import AnonymousAuthenticationProvider

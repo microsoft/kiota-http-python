@@ -413,7 +413,6 @@ class HttpxRequestAdapter(RequestAdapter, Generic[ModelType]):
         if response.is_success:
             return
         try:
-            # TODO: set status for the parent only?
             attribute_span.set_status(trace.StatusCode.ERROR)
 
             _throw_failed_resp_span = self._start_local_tracing_span(
@@ -435,7 +434,6 @@ class HttpxRequestAdapter(RequestAdapter, Generic[ModelType]):
                 )
                 # set this or ignore as description in set_status?
                 _throw_failed_resp_span.set_attribute("status_message", "received_error_response")
-                # TODO: set status for just this span or the parent as well?
                 _throw_failed_resp_span.set_status(trace.StatusCode.ERROR, str(exc))
                 attribute_span.record_exception(exc)
                 raise exc

@@ -10,13 +10,13 @@ charset-normalizer==3.2.0
 
 colorama==0.4.6
 
-coverage[toml]==7.2.7
+coverage[toml]==7.3.0
 
 dill==0.3.7
 
 docutils==0.20.1
 
-exceptiongroup==1.1.2
+exceptiongroup==1.1.3
 
 flit==3.9.0
 
@@ -34,13 +34,13 @@ mccabe==0.7.0
 
 mock==5.1.0
 
-mypy==1.4.1
+mypy==1.5.0
 
 mypy-extensions==1.0.0
 
 packaging==23.1
 
-platformdirs==3.9.1
+platformdirs==3.10.0
 
 pluggy==1.2.0
 
@@ -88,7 +88,7 @@ httpx[http2]==0.24.1
 
 hyperframe==6.0.1
 
-microsoft-kiota-abstractions==0.6.0
+microsoft-kiota-abstractions==0.7.1
 
 sniffio==1.3.0
 

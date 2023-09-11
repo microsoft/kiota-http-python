@@ -45,6 +45,14 @@ REQUEST_IS_NULL = RequestError("Request info cannot be null")
 
 tracer = trace.get_tracer(ObservabilityOptions.get_tracer_instrumentation_name(), VERSION)
 
+RESPONSE_HANDLER_EVENT_INVOKED_KEY = "response_handler_invoked"
+ERROR_MAPPING_FOUND_KEY = "com.microsoft.kiota.error.mapping_found"
+ERROR_BODY_FOUND_KEY = "com.microsoft.kiota.error.body_found"
+DESERIALIZED_MODEL_NAME_KEY = "com.microsoft.kiota.response.type"
+REQUEST_IS_NULL = RequestError("Request info cannot be null")
+
+tracer = trace.get_tracer(ObservabilityOptions.get_tracer_instrumentation_name(), VERSION)
+
 
 class HttpxRequestAdapter(RequestAdapter, Generic[ModelType]):
 
@@ -373,7 +381,7 @@ class HttpxRequestAdapter(RequestAdapter, Generic[ModelType]):
         if not any([self._serialization_writer_factory, self._parse_node_factory]):
             raise BackingStoreError("Unable to enable backing store")
         if backing_store_factory:
-            BackingStoreFactorySingleton.__instance = backing_store_factory
+            BackingStoreFactorySingleton(backing_store_factory=backing_store_factory)
 
     async def get_root_parse_node(
         self,

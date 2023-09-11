@@ -84,7 +84,7 @@ hpack==4.0.0
 
 httpcore==0.18.0
 
-httpx[http2]==0.24.1
+httpx[http2]==0.25.0
 
 hyperframe==6.0.1
 

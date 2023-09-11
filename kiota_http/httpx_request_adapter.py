@@ -26,7 +26,7 @@ from kiota_abstractions.store import BackingStoreFactory, BackingStoreFactorySin
 from opentelemetry import trace
 from opentelemetry.semconv.trace import SpanAttributes
 
-from kiota_http._exceptions import BackingstoreError, DeserializationError, RequestError
+from kiota_http._exceptions import BackingStoreError, DeserializationError, RequestError
 from kiota_http.middleware.parameters_name_decoding_handler import ParametersNameDecodingHandler
 
 from ._version import VERSION
@@ -371,7 +371,7 @@ class HttpxRequestAdapter(RequestAdapter, Generic[ModelType]):
             )
         )
         if not any([self._serialization_writer_factory, self._parse_node_factory]):
-            raise BackingstoreError("Unable to enable backing store")
+            raise BackingStoreError("Unable to enable backing store")
         if backing_store_factory:
             BackingStoreFactorySingleton.__instance = backing_store_factory
 

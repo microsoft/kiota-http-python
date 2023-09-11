@@ -5,7 +5,7 @@ class KiotaHTTPXError(Exception):
     """Base class for Kiota HTTP exceptions."""
 
 
-class BackingstoreError(KiotaHTTPXError):
+class BackingStoreError(KiotaHTTPXError):
     """Raised for the backing store."""
 
 

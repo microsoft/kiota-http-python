@@ -536,8 +536,10 @@ class HttpxRequestAdapter(RequestAdapter, Generic[ModelType]):
                     raise ValueError("Unable to parse claims from response")
                 response_claims = claims_match.group().split('="')[1]
                 parent_span.add_event(AUTHENTICATE_CHALLENGED_EVENT_KEY)
-		parent_span.set_attribute("http.retry_count", 1)
-                return await self.get_http_response_message(request_info, parent_span, response_claims)
+	        parent_span.set_attribute("http.retry_count", 1)
+                return await self.get_http_response_message(
+		    request_info, parent_span, response_claims
+		)
             return resp
         return resp
 

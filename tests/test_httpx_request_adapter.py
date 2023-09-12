@@ -286,10 +286,12 @@ async def test_observability(request_adapter, request_info, mock_user_response, 
     assert not trace.get_current_span().is_recording()
     
 @pytest.mark.asyncio
-async def test_retries_on_cae_failure(request_adapter, request_info_mock, mock_cae_failure_response):
+async def test_retries_on_cae_failure(
+    request_adapter, request_info_mock, mock_cae_failure_response, mock_otel_span
+):
     request_adapter._http_client.send = AsyncMock(return_value=mock_cae_failure_response)
     request_adapter._authentication_provider.authenticate_request = AsyncMock()
-    resp = await request_adapter.get_http_response_message(request_info_mock)
+    resp = await request_adapter.get_http_response_message(request_info_mock, mock_otel_span)
     assert isinstance(resp, httpx.Response)
     calls = [
         call(request_info_mock, None),

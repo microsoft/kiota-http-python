@@ -38,14 +38,7 @@ from .observability_options import ObservabilityOptions
 ResponseType = Union[str, int, float, bool, datetime, bytes]
 ModelType = TypeVar("ModelType", bound=Parsable)
 
-RESPONSE_HANDLER_EVENT_INVOKED_KEY = "response_handler_invoked"
-ERROR_MAPPING_FOUND_KEY = "com.microsoft.kiota.error.mapping_found"
-ERROR_BODY_FOUND_KEY = "com.microsoft.kiota.error.body_found"
-DESERIALIZED_MODEL_NAME_KEY = "com.microsoft.kiota.response.type"
-REQUEST_IS_NULL = RequestError("Request info cannot be null")
-
-tracer = trace.get_tracer(ObservabilityOptions.get_tracer_instrumentation_name(), VERSION)
-
+AUTHENTICATE_CHALLENGED_EVENT_KEY = "com.microsoft.kiota.authenticate_challenge_received"
 RESPONSE_HANDLER_EVENT_INVOKED_KEY = "response_handler_invoked"
 ERROR_MAPPING_FOUND_KEY = "com.microsoft.kiota.error.mapping_found"
 ERROR_BODY_FOUND_KEY = "com.microsoft.kiota.error.body_found"
@@ -528,6 +521,7 @@ class HttpxRequestAdapter(RequestAdapter, Generic[ModelType]):
     async def retry_cae_response_if_required(
         self, resp: httpx.Response, request_info: RequestInformation, claims: str
     ) -> httpx.Response:
+        parent_span = self.start_tracing_span(request_info, "retry_cae_response_if_required")
         if (
             resp.status_code == 401
             and not claims  # previous claims exist. Means request has already been retried
@@ -541,7 +535,9 @@ class HttpxRequestAdapter(RequestAdapter, Generic[ModelType]):
                 if not claims_match:
                     raise ValueError("Unable to parse claims from response")
                 response_claims = claims_match.group().split('="')[1]
-                return await self.get_http_response_message(request_info, response_claims)
+                parent_span.add_event(AUTHENTICATE_CHALLENGED_EVENT_KEY)
+				parent_span.set_attribute("http.retry_count", 1)
+                return await self.get_http_response_message(request_info, parent_span, response_claims)
             return resp
         return resp
 

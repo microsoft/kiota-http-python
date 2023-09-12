@@ -490,15 +490,15 @@ class HttpxRequestAdapter(RequestAdapter, Generic[ModelType]):
             _throw_failed_resp_span.end()
 
     async def get_http_response_message(
-        self, request_info: RequestInformation, parent_span: trace.Span
+        self,
+        request_info: RequestInformation,
+        parent_span: trace.Span
+        claims: str = ""
     ) -> httpx.Response:
         _get_http_resp_span = self._start_local_tracing_span(
             "get_http_response_message", parent_span
         )
 
-    async def get_http_response_message(
-        self, request_info: RequestInformation, claims: str = ""
-    ) -> httpx.Response:
         self.set_base_url_for_request_information(request_info)
 
         additional_authentication_context = None

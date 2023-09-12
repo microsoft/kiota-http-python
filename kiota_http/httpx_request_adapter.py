@@ -494,9 +494,9 @@ class HttpxRequestAdapter(RequestAdapter, Generic[ModelType]):
 
         self.set_base_url_for_request_information(request_info)
 
-        additional_authentication_context = None
+        additional_authentication_context = {}
         if claims:
-            additional_authentication_context = {self.CLAIMS_KEY: claims}
+            additional_authentication_context[self.CLAIMS_KEY] = claims
 
         await self._authentication_provider.authenticate_request(
             request_info, additional_authentication_context

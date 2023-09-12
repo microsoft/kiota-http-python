@@ -2,8 +2,9 @@ from dataclasses import dataclass
 
 import httpx
 import pytest
-from asyncmock import AsyncMock
+from unittest.mock import AsyncMock
 from kiota_abstractions.api_error import APIError
+from kiota_abstractions.method import Method
 from kiota_abstractions.authentication import AnonymousAuthenticationProvider
 from kiota_abstractions.request_information import RequestInformation
 
@@ -24,7 +25,11 @@ def request_info():
 
 @pytest.fixture
 def request_info_mock():
-    return RequestInformation()
+    request_info = RequestInformation()
+    request_info.content = b'Hello World'
+    request_info.http_method = Method.GET
+    request_info.url_template = "https://example.com"
+    return request_info
 
 
 @pytest.fixture
@@ -179,3 +184,18 @@ def mock_primitive_response_bytes(mocker):
 @pytest.fixture
 def mock_no_content_response(mocker):
     return httpx.Response(204, json="Radom JSON", headers={"Content-Type": "application/json"})
+
+@pytest.fixture
+def mock_cae_failure_response(mocker):
+    auth_header = """Bearer authorization_uri="https://login.windows.net/common/oauth2/authorize",
+    client_id="00000003-0000-0000-c000-000000000000",
+    error="insufficient_claims",
+    claims="eyJhY2Nlc3NfdG9rZW4iOnsibmJmIjp7ImVzc2VudGlhbCI6dHJ1ZSwgInZhbHVlIjoiMTYwNDEwNjY1MSJ9fX0="
+    """
+    return httpx.Response(
+        401,
+        headers={
+            "Content-Type": "application/json",
+            "WWW-Authenticate": auth_header
+        }
+    )

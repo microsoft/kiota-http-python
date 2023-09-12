@@ -294,7 +294,7 @@ async def test_retries_on_cae_failure(
     resp = await request_adapter.get_http_response_message(request_info_mock, mock_otel_span)
     assert isinstance(resp, httpx.Response)
     calls = [
-        call(request_info_mock, None),
+        call(request_info_mock, {}),
         call(request_info_mock, {'claims': 'eyJhY2Nlc3NfdG9rZW4iOnsibmJmIjp7ImVzc2VudGlhbCI6dHJ1ZSwgInZhbHVlIjoiMTYwNDEwNjY1MSJ9fX0'})
     ]
     request_adapter._authentication_provider.authenticate_request.assert_has_awaits(calls)

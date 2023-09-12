@@ -2,7 +2,7 @@ from unittest.mock import patch
 
 import httpx
 import pytest
-from asyncmock import AsyncMock
+from unittest.mock import AsyncMock, call
 from kiota_abstractions.api_error import APIError
 from kiota_abstractions.method import Method
 from kiota_abstractions.native_response_handler import NativeResponseHandler
@@ -284,3 +284,15 @@ async def test_observability(request_adapter, request_info, mock_user_response, 
         start_tracing_span.assert_called_once_with(request_info, "send_async")
     assert final_result.display_name == mock_user.display_name
     assert not trace.get_current_span().is_recording()
+    
+@pytest.mark.asyncio
+async def test_retries_on_cae_failure(request_adapter, request_info_mock, mock_cae_failure_response):
+    request_adapter._http_client.send = AsyncMock(return_value=mock_cae_failure_response)
+    request_adapter._authentication_provider.authenticate_request = AsyncMock()
+    resp = await request_adapter.get_http_response_message(request_info_mock)
+    assert isinstance(resp, httpx.Response)
+    calls = [
+        call(request_info_mock, None),
+        call(request_info_mock, {'claims': 'eyJhY2Nlc3NfdG9rZW4iOnsibmJmIjp7ImVzc2VudGlhbCI6dHJ1ZSwgInZhbHVlIjoiMTYwNDEwNjY1MSJ9fX0'})
+    ]
+    request_adapter._authentication_provider.authenticate_request.assert_has_awaits(calls)

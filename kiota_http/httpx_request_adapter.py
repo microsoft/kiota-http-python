@@ -492,7 +492,7 @@ class HttpxRequestAdapter(RequestAdapter, Generic[ModelType]):
     async def get_http_response_message(
         self,
         request_info: RequestInformation,
-        parent_span: trace.Span
+        parent_span: trace.Span,
         claims: str = ""
     ) -> httpx.Response:
         _get_http_resp_span = self._start_local_tracing_span(

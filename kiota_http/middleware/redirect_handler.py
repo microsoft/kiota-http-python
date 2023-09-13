@@ -85,6 +85,8 @@ class RedirectHandler(BaseMiddleware):
                 request = new_request
                 continue
             response.history = self.history
+            break
+        if not retryable:
             exc = RedirectError(f"Too many redirects. {response.history}")
             _redirect_span.record_exception(exc)
             _redirect_span.end()

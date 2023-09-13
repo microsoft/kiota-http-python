@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 import httpx
 import pytest
 from unittest.mock import AsyncMock, call
@@ -8,6 +10,7 @@ from kiota_abstractions.serialization import (
     ParseNodeFactoryRegistry,
     SerializationWriterFactoryRegistry,
 )
+from opentelemetry import trace
 
 from kiota_http.httpx_request_adapter import HttpxRequestAdapter
 from kiota_http.middleware.options import ResponseHandlerOption
@@ -57,11 +60,12 @@ def test_set_base_url_for_request_information(request_adapter, request_info):
     assert request_info.path_parameters["baseurl"] == BASE_URL
 
 
-def test_get_request_from_request_information(request_adapter, request_info):
+def test_get_request_from_request_information(request_adapter, request_info, mock_otel_span):
     request_info.http_method = Method.GET
     request_info.url = BASE_URL
     request_info.content = bytes('hello world', 'utf_8')
-    req = request_adapter.get_request_from_request_information(request_info)
+    span = mock_otel_span
+    req = request_adapter.get_request_from_request_information(request_info, span, span)
     assert isinstance(req, httpx.Request)
 
 
@@ -105,22 +109,8 @@ async def test_does_not_throw_failed_responses_on_success(request_adapter, simpl
 
 
 @pytest.mark.asyncio
-async def test_throw_failed_responses_null_error_map(request_adapter, simple_error_response):
-    assert simple_error_response.text == '{"error": "not found"}'
-    assert simple_error_response.status_code == 404
-    content_type = request_adapter.get_response_content_type(simple_error_response)
-    assert content_type == 'application/json'
-
-    with pytest.raises(APIError) as e:
-        await request_adapter.throw_failed_responses(simple_error_response, None)
-    assert str(e.value.message) == "The server returned an unexpected status code and"\
-            " no error class is registered for this code 404"
-    assert e.value.response_status_code == 404
-
-
-@pytest.mark.asyncio
-async def test_throw_failed_responses_no_error_class(
-    request_adapter, simple_error_response, mock_error_map
+async def test_throw_failed_responses_null_error_map(
+    request_adapter, simple_error_response, mock_otel_span
 ):
     assert simple_error_response.text == '{"error": "not found"}'
     assert simple_error_response.status_code == 404
@@ -128,15 +118,35 @@ async def test_throw_failed_responses_no_error_class(
     assert content_type == 'application/json'
 
     with pytest.raises(APIError) as e:
-        await request_adapter.throw_failed_responses(simple_error_response, mock_error_map)
+        span = mock_otel_span
+        await request_adapter.throw_failed_responses(simple_error_response, None, span, span)
     assert str(e.value.message) == "The server returned an unexpected status code and"\
-            " no error class is registered for this code 404"
+        " no error class is registered for this code 404"
+    assert e.value.response_status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_throw_failed_responses_no_error_class(
+    request_adapter, simple_error_response, mock_error_map, mock_otel_span
+):
+    assert simple_error_response.text == '{"error": "not found"}'
+    assert simple_error_response.status_code == 404
+    content_type = request_adapter.get_response_content_type(simple_error_response)
+    assert content_type == 'application/json'
+
+    with pytest.raises(APIError) as e:
+        span = mock_otel_span
+        await request_adapter.throw_failed_responses(
+            simple_error_response, mock_error_map, span, span
+        )
+    assert str(e.value.message) == "The server returned an unexpected status code and"\
+        " no error class is registered for this code 404"
     assert e.value.response_status_code == 404
 
 
 @pytest.mark.asyncio
 async def test_throw_failed_responses_not_apierror(
-    request_adapter, mock_error_map, mock_error_object
+    request_adapter, mock_error_map, mock_error_object, mock_otel_span
 ):
     request_adapter.get_root_parse_node = AsyncMock(return_value=mock_error_object)
     resp = httpx.Response(status_code=500, headers={"Content-Type": "application/json"})
@@ -145,12 +155,15 @@ async def test_throw_failed_responses_not_apierror(
     assert content_type == 'application/json'
 
     with pytest.raises(Exception) as e:
-        await request_adapter.throw_failed_responses(resp, mock_error_map)
+        span = mock_otel_span
+        await request_adapter.throw_failed_responses(resp, mock_error_map, span, span)
     assert str(e.value.message) == "Unexpected error type: <class 'Exception'>"
 
 
 @pytest.mark.asyncio
-async def test_throw_failed_responses(request_adapter, mock_apierror_map, mock_error_object):
+async def test_throw_failed_responses(
+    request_adapter, mock_apierror_map, mock_error_object, mock_otel_span
+):
     request_adapter.get_root_parse_node = AsyncMock(return_value=mock_error_object)
     resp = httpx.Response(status_code=500, headers={"Content-Type": "application/json"})
     assert resp.status_code == 500
@@ -158,7 +171,8 @@ async def test_throw_failed_responses(request_adapter, mock_apierror_map, mock_e
     assert content_type == 'application/json'
 
     with pytest.raises(APIError) as e:
-        await request_adapter.throw_failed_responses(resp, mock_apierror_map)
+        span = mock_otel_span
+        await request_adapter.throw_failed_responses(resp, mock_apierror_map, span, span)
     assert str(e.value.message) == "Custom Internal Server Error"
 
 
@@ -254,15 +268,33 @@ async def test_convert_to_native_async(request_adapter, request_info):
     request_info.content = bytes('hello world', 'utf_8')
     req = await request_adapter.convert_to_native_async(request_info)
     assert isinstance(req, httpx.Request)
+
+@pytest.mark.asyncio
+async def test_observability(request_adapter, request_info, mock_user_response, mock_user):
+    """Ensures the otel tracer and created spans are set and called correctly."""
+    request_adapter.get_http_response_message = AsyncMock(return_value=mock_user_response)
+    request_adapter.get_root_parse_node = AsyncMock(return_value=mock_user)
+    resp = await request_adapter.get_http_response_message(request_info)
+    assert resp.headers.get("content-type") == 'application/json'
+
+    with patch("kiota_http.httpx_request_adapter.HttpxRequestAdapter.start_tracing_span") as start_tracing_span:
+        final_result = await request_adapter.send_async(request_info, MockResponseObject, {})
+        assert start_tracing_span is not None
+        # check if the send_async span is created
+        start_tracing_span.assert_called_once_with(request_info, "send_async")
+    assert final_result.display_name == mock_user.display_name
+    assert not trace.get_current_span().is_recording()
     
 @pytest.mark.asyncio
-async def test_retries_on_cae_failure(request_adapter, request_info_mock, mock_cae_failure_response):
+async def test_retries_on_cae_failure(
+    request_adapter, request_info_mock, mock_cae_failure_response, mock_otel_span
+):
     request_adapter._http_client.send = AsyncMock(return_value=mock_cae_failure_response)
     request_adapter._authentication_provider.authenticate_request = AsyncMock()
-    resp = await request_adapter.get_http_response_message(request_info_mock)
+    resp = await request_adapter.get_http_response_message(request_info_mock, mock_otel_span)
     assert isinstance(resp, httpx.Response)
     calls = [
-        call(request_info_mock, None),
+        call(request_info_mock, {}),
         call(request_info_mock, {'claims': 'eyJhY2Nlc3NfdG9rZW4iOnsibmJmIjp7ImVzc2VudGlhbCI6dHJ1ZSwgInZhbHVlIjoiMTYwNDEwNjY1MSJ9fX0'})
     ]
     request_adapter._authentication_provider.authenticate_request.assert_has_awaits(calls)

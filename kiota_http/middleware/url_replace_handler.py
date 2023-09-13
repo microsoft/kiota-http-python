@@ -1,5 +1,6 @@
 import httpx
 from kiota_abstractions.request_option import RequestOption
+from opentelemetry.semconv.trace import SpanAttributes
 
 from .middleware import BaseMiddleware
 from .options import UrlReplaceHandlerOption
@@ -20,7 +21,7 @@ class UrlReplaceHandler(BaseMiddleware):
 
     async def send(
         self, request: httpx.Request, transport: httpx.AsyncBaseTransport
-    ) -> httpx.Response:  #type: ignore
+    ) -> httpx.Response:  # type: ignore
         """To execute the current middleware
 
         Args:
@@ -30,12 +31,18 @@ class UrlReplaceHandler(BaseMiddleware):
         Returns:
             Response: The response object.
         """
-        current_options = self._get_current_options(request)
+        response = None
+        _enable_span = self._create_observability_span(request, "UrlReplaceHandler_send")
+        if self.options and self.options.is_enabled:
+            _enable_span.set_attribute("com.microsoft.kiota.handler.url_replacer.enable", True)
+            current_options = self._get_current_options(request)
 
-        url_string: str = str(request.url)  #type: ignore
-        url_string = self.replace_url_segment(url_string, current_options)
-        request.url = httpx.URL(url_string)
+            url_string: str = str(request.url)  # type: ignore
+            url_string = self.replace_url_segment(url_string, current_options)
+            request.url = httpx.URL(url_string)
+            _enable_span.set_attribute(SpanAttributes.HTTP_URL, str(request.url))
         response = await super().send(request, transport)
+        _enable_span.end()
         return response
 
     def _get_current_options(self, request: httpx.Request) -> UrlReplaceHandlerOption:
@@ -48,7 +55,7 @@ class UrlReplaceHandler(BaseMiddleware):
         Returns:
             UrlReplaceHandlerOption: The options to be used.
         """
-        current_options =request.options.get(  # type:ignore
+        current_options = request.options.get(  # type:ignore
             UrlReplaceHandlerOption.get_key(), self.options
         )
         return current_options

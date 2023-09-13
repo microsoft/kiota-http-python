@@ -1,6 +1,7 @@
 import pytest
-from kiota_http.middleware.options.user_agent_handler_option import UserAgentHandlerOption
+
 from kiota_http._version import VERSION
+from kiota_http.middleware.options.user_agent_handler_option import UserAgentHandlerOption
 
 
 def test_no_config():

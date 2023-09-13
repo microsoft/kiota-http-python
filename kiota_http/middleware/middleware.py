@@ -1,7 +1,14 @@
 import ssl
+from typing import Optional
 
 import httpx
+from opentelemetry import trace
 from urllib3 import PoolManager
+
+from .._version import VERSION
+from ..observability_options import ObservabilityOptions
+
+tracer = trace.get_tracer(ObservabilityOptions.get_tracer_instrumentation_name(), VERSION)
 
 
 class MiddlewarePipeline():
@@ -45,6 +52,7 @@ class BaseMiddleware():
 
     def __init__(self):
         self.next = None
+        self.parent_span = None
 
     async def send(self, request, transport):
         if self.next is None:
@@ -55,3 +63,16 @@ class BaseMiddleware():
             response.request = request
             return response
         return await self.next.send(request, transport)
+
+    def _create_observability_span(self, request, span_name: str) -> trace.Span:
+        """Gets the parent_span from the request options and creates a new span.
+        If no parent_span is found, we try to get the current span."""
+        _span = None
+        if options := getattr(request, "options", None):
+            if parent_span := options.get("parent_span", None):
+                self.parent_span = parent_span
+                _context = trace.set_span_in_context(parent_span)
+                _span = tracer.start_span(span_name, _context)
+        if _span is None:
+            _span = trace.get_current_span()
+        return _span

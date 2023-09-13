@@ -2,9 +2,14 @@ import typing
 
 import httpx
 from kiota_abstractions.request_option import RequestOption
+from opentelemetry.semconv.trace import SpanAttributes
 
+from .._exceptions import RedirectError
 from .middleware import BaseMiddleware
 from .options import RedirectHandlerOption
+
+REDIRECT_ENABLE_KEY = "com.microsoft.kiota.handler.redirect.enable"
+REDIRECT_COUNT_KEY = "com.microsoft.kiota.handler.redirect.count"
 
 
 class RedirectHandler(BaseMiddleware):
@@ -59,23 +64,34 @@ class RedirectHandler(BaseMiddleware):
         """Sends the http request object to the next middleware or redirects
         the request if necessary.
         """
+        _enable_span = self._create_observability_span(request, "RedirectHandler_send")
         current_options = self._get_current_options(request)
+        _enable_span.set_attribute(REDIRECT_ENABLE_KEY, True)
+        _enable_span.end()
 
         retryable = True
+        _redirect_span = self._create_observability_span(
+            request, f"RedirectHandler_send - redirect {len(self.history)}"
+        )
         while retryable:
             response = await super().send(request, transport)
+            _redirect_span.set_attribute(SpanAttributes.HTTP_STATUS_CODE, response.status_code)
             redirect_location = self.get_redirect_location(response)
             if redirect_location and current_options.should_redirect:
                 current_options.max_redirect -= 1
                 retryable = self.increment(response, current_options.max_redirect)
+                _redirect_span.set_attribute(REDIRECT_COUNT_KEY, len(self.history))
                 new_request = self._build_redirect_request(request, response)
                 request = new_request
                 continue
-
             response.history = self.history
-            return response
-
-        raise Exception(f"Too many redirects. {response.history}")
+            break
+        if not retryable:
+            exc = RedirectError(f"Too many redirects. {response.history}")
+            _redirect_span.record_exception(exc)
+            _redirect_span.end()
+            raise exc
+        return response
 
     def _get_current_options(self, request: httpx.Request) -> RedirectHandlerOption:
         """Returns the options to use for the request.Overries default options if

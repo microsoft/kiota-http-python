@@ -7,6 +7,7 @@ from kiota_abstractions.api_error import APIError
 from kiota_abstractions.method import Method
 from kiota_abstractions.authentication import AnonymousAuthenticationProvider
 from kiota_abstractions.request_information import RequestInformation
+from opentelemetry import trace
 
 from kiota_http.httpx_request_adapter import HttpxRequestAdapter
 
@@ -172,18 +173,29 @@ def mock_primitive(mocker):
 def mock_primitive_response(mocker):
     return httpx.Response(200, json=22.3, headers={"Content-Type": "application/json"})
 
+
 @pytest.fixture
 def mock_primitive_response_bytes(mocker):
     return httpx.Response(
         200,
         content=b'Hello World',
-        headers={"Content-Type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document"}
+        headers={
+            "Content-Type":
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        }
     )
 
 
 @pytest.fixture
 def mock_no_content_response(mocker):
     return httpx.Response(204, json="Radom JSON", headers={"Content-Type": "application/json"})
+
+tracer = trace.get_tracer(__name__)
+
+
+@pytest.fixture
+def mock_otel_span():
+    return tracer.start_span("mock")
 
 @pytest.fixture
 def mock_cae_failure_response(mocker):

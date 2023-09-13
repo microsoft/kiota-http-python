@@ -3,8 +3,12 @@ import pytest
 
 from kiota_http.kiota_client_factory import KiotaClientFactory
 from kiota_http.middleware import (
-    AsyncKiotaTransport, MiddlewarePipeline, ParametersNameDecodingHandler, RedirectHandler,
-    RetryHandler, UrlReplaceHandler
+    AsyncKiotaTransport,
+    MiddlewarePipeline,
+    ParametersNameDecodingHandler,
+    RedirectHandler,
+    RetryHandler,
+    UrlReplaceHandler,
 )
 from kiota_http.middleware.options import RedirectHandlerOption, RetryHandlerOption
 from kiota_http.middleware.user_agent_handler import UserAgentHandler

@@ -1,6 +1,6 @@
 -i https://pypi.org/simple
 
-astroid==2.15.6
+astroid==2.15.7
 
 certifi==2023.7.22
 

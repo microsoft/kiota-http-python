@@ -36,7 +36,7 @@ mypy==1.5.1
 
 mypy-extensions==1.0.0
 
-packaging==23.1
+packaging==23.2
 
 platformdirs==3.10.0
 

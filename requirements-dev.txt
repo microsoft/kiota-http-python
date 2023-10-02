@@ -42,7 +42,7 @@ platformdirs==3.10.0
 
 pluggy==1.3.0
 
-pylint==2.17.6
+pylint==2.17.7
 
 pytest==7.4.2
 

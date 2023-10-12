@@ -42,6 +42,7 @@ class KiotaClientFactory:
 
     @staticmethod
     def create_with_default_middleware(
+        client: Optional[httpx.AsyncClient] = None,
         options: Optional[Dict[str, RequestOption]] = None
     ) -> httpx.AsyncClient:
         """Constructs native HTTP AsyncClient(httpx.AsyncClient) instances configured with
@@ -55,21 +56,15 @@ class KiotaClientFactory:
             httpx.AsycClient: An instance of the AsyncClient object
         """
 
-        kiota_async_client = KiotaClientFactory.get_default_client()
-        current_transport = kiota_async_client._transport
+        kiota_async_client = KiotaClientFactory.get_default_client() if client is None else client
         middleware = KiotaClientFactory.get_default_middleware(options)
-        middleware_pipeline = KiotaClientFactory.create_middleware_pipeline(
-            middleware, current_transport
-        )
 
-        kiota_async_client._transport = AsyncKiotaTransport(
-            transport=current_transport, pipeline=middleware_pipeline
-        )
-        return kiota_async_client
+        return KiotaClientFactory._load_middleware_to_client(kiota_async_client, middleware)
 
     @staticmethod
     def create_with_custom_middleware(
         middleware: Optional[List[BaseMiddleware]],
+        client: Optional[httpx.AsyncClient] = None,
     ) -> httpx.AsyncClient:
         """Constructs native HTTP AsyncClient(httpx.AsyncClient) instances configured with
         a custom pipeline of middleware.
@@ -79,16 +74,8 @@ class KiotaClientFactory:
             a middleware pipeline. The middleware should be arranged in the order in which they will
             modify the request.
         """
-        kiota_async_client = KiotaClientFactory.get_default_client()
-        current_transport = kiota_async_client._transport
-        middleware_pipeline = KiotaClientFactory.create_middleware_pipeline(
-            middleware, current_transport
-        )
-
-        kiota_async_client._transport = AsyncKiotaTransport(
-            transport=current_transport, pipeline=middleware_pipeline
-        )
-        return kiota_async_client
+        kiota_async_client = KiotaClientFactory.get_default_client() if client is None else client
+        return KiotaClientFactory._load_middleware_to_client(kiota_async_client, middleware)
 
     @staticmethod
     def get_default_middleware(options: Optional[Dict[str, RequestOption]]) -> List[BaseMiddleware]:
@@ -145,3 +132,36 @@ class KiotaClientFactory:
             for ware in middleware:
                 middleware_pipeline.add_middleware(ware)
         return middleware_pipeline
+
+    @staticmethod
+    def _load_middleware_to_client(
+        client: httpx.AsyncClient, middleware: Optional[List[BaseMiddleware]]
+    ) -> httpx.AsyncClient:
+        current_transport = client._transport
+        client._transport = KiotaClientFactory._replace_transport_with_custom_kiota_transport(
+            current_transport, middleware
+        )
+        if client._mounts:
+            mounts: dict = {}
+            for pattern, transport in client._mounts.items():
+                if transport is None:
+                    mounts[pattern] = None
+                else:
+                    mounts[pattern
+                           ] = KiotaClientFactory._replace_transport_with_custom_kiota_transport(
+                               transport, middleware
+                           )
+            client._mounts = dict(sorted(mounts.items()))
+        return client
+
+    @staticmethod
+    def _replace_transport_with_custom_kiota_transport(
+        current_transport: httpx.AsyncBaseTransport, middleware: Optional[List[BaseMiddleware]]
+    ) -> AsyncKiotaTransport:
+        middleware_pipeline = KiotaClientFactory.create_middleware_pipeline(
+            middleware, current_transport
+        )
+        new_transport = AsyncKiotaTransport(
+            transport=current_transport, pipeline=middleware_pipeline
+        )
+        return new_transport

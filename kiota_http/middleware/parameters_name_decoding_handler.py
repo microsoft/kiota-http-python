@@ -51,7 +51,9 @@ class ParametersNameDecodingHandler(BaseMiddleware):
                 current_options.characters_to_decode
             ]
         ):
-            request.url = httpx.URL(self.decode_uri_encoded_string(updated_url, current_options.characters_to_decode))
+            request.url = httpx.URL(
+                self.decode_uri_encoded_string(updated_url, current_options.characters_to_decode)
+            )
         response = await super().send(request, transport)
         return response
 
@@ -80,7 +82,10 @@ class ParametersNameDecodingHandler(BaseMiddleware):
         query_params = urlparse(original).query
         if not query_params:
             return original
-        encode_decode = {"%{0:0>2x}".format(ord(decoded_value)): decoded_value for decoded_value in characters_to_decode}
+        encode_decode = {
+            "%{0:0>2x}".format(ord(decoded_value)): decoded_value
+            for decoded_value in characters_to_decode
+        }
         decoded_params = []
         query_name_value = query_params.split('&')
         for name_value in query_name_value:

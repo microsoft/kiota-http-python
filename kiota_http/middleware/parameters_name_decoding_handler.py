@@ -1,7 +1,8 @@
-from urllib.parse import unquote
+from urllib.parse import urlparse, quote
 
 import httpx
 from kiota_abstractions.request_option import RequestOption
+from typing import List
 
 from .middleware import BaseMiddleware
 from .options import ParametersNameDecodingHandlerOption
@@ -50,13 +51,12 @@ class ParametersNameDecodingHandler(BaseMiddleware):
                 current_options.characters_to_decode
             ]
         ):
-            updated_url = unquote(updated_url)
-        request.url = httpx.URL(updated_url)
+            request.url = httpx.URL(self.decode_uri_encoded_string(updated_url, current_options.characters_to_decode))
         response = await super().send(request, transport)
         return response
 
     def _get_current_options(self, request: httpx.Request) -> ParametersNameDecodingHandlerOption:
-        """Returns the options to use for the request.Overries default options if
+        """Returns the options to use for the request.Overrides default options if
         request options are passed.
 
         Args:
@@ -71,8 +71,20 @@ class ParametersNameDecodingHandler(BaseMiddleware):
             )
         return current_options
 
-    def decode_uri_encoded_string(self, original: str) -> str:
+    @staticmethod
+    def decode_uri_encoded_string(original: str, characters_to_decode: List[str]) -> str:
         """Decodes a uri encoded string ."""
-        if original and '%' in original:
-            return unquote(original)
-        return original
+        if not original or not characters_to_decode:
+            return original
+        query_params = urlparse(original).query
+        if not query_params:
+            return original
+        encode_decode = {quote(decoded_value): decoded_value for decoded_value in characters_to_decode}
+        decoded_params = []
+        query_name_value = query_params.split('&')
+        for name_value in query_name_value:
+            name, value = name_value.split('=')
+            for encoded, decoded in encode_decode:
+                name = name.replace(encoded, decoded)
+            decoded_params.append(f'{name}={value}')
+        return original.replace(query_params, '&'.join(decoded_params))

@@ -1,8 +1,8 @@
-from urllib.parse import urlparse, quote
+from urllib.parse import urlparse
+from typing import List
 
 import httpx
 from kiota_abstractions.request_option import RequestOption
-from typing import List
 
 from .middleware import BaseMiddleware
 from .options import ParametersNameDecodingHandlerOption
@@ -83,7 +83,7 @@ class ParametersNameDecodingHandler(BaseMiddleware):
         if not query_params:
             return original
         encode_decode = {
-            "%{0:0>2x}".format(ord(decoded_value)): decoded_value
+            f'%{ord(decoded_value):0>2x}': decoded_value
             for decoded_value in characters_to_decode
         }
         decoded_params = []

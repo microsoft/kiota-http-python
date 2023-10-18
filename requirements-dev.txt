@@ -86,7 +86,7 @@ httpx[http2]==0.25.0
 
 hyperframe==6.0.1
 
-microsoft-kiota-abstractions==0.8.7
+microsoft-kiota-abstractions==0.9.0
 
 sniffio==1.3.0
 

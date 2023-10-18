@@ -323,7 +323,7 @@ class HttpxRequestAdapter(RequestAdapter, Generic[ModelType]):
                 value = root_node.get_bool_value()
             if response_type == "datetime":
                 value = root_node.get_datetime_value()
-            if value:
+            if value is not None:
                 parent_span.set_attribute(DESERIALIZED_MODEL_NAME_KEY, value.__class__.__name__)
                 _deserialized_span.end()
                 return value

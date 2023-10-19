@@ -32,7 +32,7 @@ from kiota_http.middleware.parameters_name_decoding_handler import ParametersNam
 
 from ._version import VERSION
 from .kiota_client_factory import KiotaClientFactory
-from .middleware.options import ResponseHandlerOption
+from .middleware.options import ResponseHandlerOption, ParametersNameDecodingHandlerOption
 from .observability_options import ObservabilityOptions
 
 ResponseType = Union[str, int, float, bool, datetime, bytes]
@@ -127,8 +127,10 @@ class HttpxRequestAdapter(RequestAdapter, Generic[ModelType]):
         Returns:
             The parent span.
         """
-        name_handler = ParametersNameDecodingHandler()
-        uri_template = name_handler.decode_uri_encoded_string(request_info.url_template)
+        characters_to_decode = ParametersNameDecodingHandlerOption().characters_to_decode
+        uri_template = ParametersNameDecodingHandler.decode_uri_encoded_string(
+            request_info.url_template, characters_to_decode
+        )
         parent_span_name = f"{method} - {uri_template}"
         span = tracer.start_span(parent_span_name)
         return span
@@ -323,7 +325,7 @@ class HttpxRequestAdapter(RequestAdapter, Generic[ModelType]):
                 value = root_node.get_bool_value()
             if response_type == "datetime":
                 value = root_node.get_datetime_value()
-            if value:
+            if value is not None:
                 parent_span.set_attribute(DESERIALIZED_MODEL_NAME_KEY, value.__class__.__name__)
                 _deserialized_span.end()
                 return value

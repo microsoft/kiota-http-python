@@ -20,6 +20,35 @@ def test_create_with_default_middleware():
 
     assert isinstance(client, httpx.AsyncClient)
     assert isinstance(client._transport, AsyncKiotaTransport)
+    
+def test_create_with_default_middleware_custom_client():
+    """Test creation of HTTP Client using default middleware while providing
+    a custom client"""
+    timeout = httpx.Timeout(20, connect=10)
+    custom_client = httpx.AsyncClient(timeout=timeout, http2=True)
+    client = KiotaClientFactory.create_with_default_middleware(custom_client)
+
+    assert isinstance(client, httpx.AsyncClient)
+    assert client.timeout == httpx.Timeout(connect=10, read=20, write=20, pool=20)
+    assert isinstance(client._transport, AsyncKiotaTransport)
+    
+def test_create_with_default_middleware_custom_client_with_proxy():
+    """Test creation of HTTP Client using default middleware while providing
+    a custom client"""
+    proxies = {
+        "http://": "http://localhost:8030",
+        "https://": "http://localhost:8031",
+    }
+    timeout = httpx.Timeout(20, connect=10)
+    custom_client = httpx.AsyncClient(timeout=timeout, http2=True, proxies=proxies)
+    client = KiotaClientFactory.create_with_default_middleware(custom_client)
+
+    assert isinstance(client, httpx.AsyncClient)
+    assert client.timeout == httpx.Timeout(connect=10, read=20, write=20, pool=20)
+    assert isinstance(client._transport, AsyncKiotaTransport)
+    assert client._mounts
+    for pattern, transport in client._mounts.items():
+        assert isinstance(transport, AsyncKiotaTransport)
 
 
 def test_create_with_default_middleware_options():
@@ -48,7 +77,44 @@ def test_create_with_custom_middleware():
     assert isinstance(client._transport, AsyncKiotaTransport)
     pipeline = client._transport.pipeline
     assert isinstance(pipeline._first_middleware, RetryHandler)
+    
+def test_create_with_custom_middleware_custom_client():
+    """Test creation of HTTP Client using custom middleware while providing
+    a custom client"""
+    timeout = httpx.Timeout(20, connect=10)
+    custom_client = httpx.AsyncClient(timeout=timeout, http2=True)
+    middleware = [
+        RetryHandler(),
+    ]
+    client = KiotaClientFactory.create_with_custom_middleware(middleware, custom_client)
+    assert client.timeout == httpx.Timeout(connect=10, read=20, write=20, pool=20)
+    assert isinstance(client._transport, AsyncKiotaTransport)
+    pipeline = client._transport.pipeline
+    assert isinstance(pipeline._first_middleware, RetryHandler)
 
+def test_create_with_custom_middleware_custom_client_with_proxy():
+    """Test creation of HTTP Client using custom middleware while providing
+    a custom client"""
+    proxies = {
+        "http://": "http://localhost:8030",
+        "https://": "http://localhost:8031",
+    }
+    timeout = httpx.Timeout(20, connect=10)
+    custom_client = httpx.AsyncClient(timeout=timeout, http2=True, proxies=proxies)
+    middleware = [
+        RetryHandler(),
+    ]
+    client = KiotaClientFactory.create_with_custom_middleware(middleware, custom_client)
+    assert client.timeout == httpx.Timeout(connect=10, read=20, write=20, pool=20)
+    assert isinstance(client._transport, AsyncKiotaTransport)
+    pipeline = client._transport.pipeline
+    assert isinstance(pipeline._first_middleware, RetryHandler)
+    assert client._mounts
+    for pattern, transport in client._mounts.items():
+        assert isinstance(transport, AsyncKiotaTransport)
+        pipeline = transport.pipeline
+        assert isinstance(pipeline._first_middleware, RetryHandler)
+    
 
 def test_get_default_middleware():
     """Test fetching of default middleware with no custom options passed"""

@@ -83,7 +83,7 @@ class ParametersNameDecodingHandler(BaseMiddleware):
 
         query_params = urlparse(original).query
         if not query_params:
-            return unquote(original)
+            return original
         encode_decode = {
             f"%{ord(decoded_value):0>2x}": decoded_value
             for decoded_value in characters_to_decode
@@ -92,7 +92,12 @@ class ParametersNameDecodingHandler(BaseMiddleware):
         query_name_value = query_params.split("&")
         for name_value in query_name_value:
             if "=" in name_value:
-                name, value = name_value.split("=")
+                # {param}= is a valid case
+                if len(name_value.split("=")) > 1:
+                    name, value = name_value.split("=")
+                else:
+                    name = name_value.split("=")[0]
+                    value = ""
                 for encoded in encode_decode:
                     name = name.replace(encoded, encode_decode[encoded])
                 decoded_params.append(f"{name}={value}")

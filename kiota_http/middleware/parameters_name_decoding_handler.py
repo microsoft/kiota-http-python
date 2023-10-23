@@ -91,16 +91,16 @@ class ParametersNameDecodingHandler(BaseMiddleware):
         decoded_params = []
         query_name_value = query_params.split("&")
         for name_value in query_name_value:
-            if "=" in name_value:
-                # {param}= is a valid case
-                if len(name_value.split("=")) > 1:
-                    name, value = name_value.split("=")
-                else:
-                    name = name_value.split("=")[0]
-                    value = ""
-                for encoded in encode_decode:
-                    name = name.replace(encoded, encode_decode[encoded])
+            if "=" in name_value and len(name_value.split("=")) > 1:
+                name, value = name_value.split("=")
+            else:
+                # &{param}= and &{param} are valid cases
+                name = name_value
+                value = ""
+            for encoded in encode_decode:
+                name = name.replace(encoded, encode_decode[encoded])
+            if value:
                 decoded_params.append(f"{name}={value}")
             else:
-                continue
+                decoded_params.append(f"{name}")
         return original.replace(query_params, "&".join(decoded_params))

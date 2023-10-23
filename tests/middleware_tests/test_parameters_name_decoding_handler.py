@@ -34,8 +34,8 @@ async def test_decodes_query_parameter_names_only():
     """
     Test that only query parameter names are decoded
     """
-    encoded_url = "https://graph.microsoft.com?%24count=true&query=%24top&created%2din=2022-10-05&q=1%2b2&q2=M%26A&subject%2ename=%7eWelcome&%24empty="
-    expected_url = "https://graph.microsoft.com?$count=true&query=%24top&created-in=2022-10-05&q=1%2b2&q2=M%26A&subject.name=%7eWelcome&$empty="
+    encoded_url = "https://graph.microsoft.com?%24count=true&query=%24top&created%2din=2022-10-05&q=1%2b2&q2=M%26A&subject%2ename=%7eWelcome&%24empty"
+    expected_url = "https://graph.microsoft.com?$count=true&query=%24top&created-in=2022-10-05&q=1%2b2&q2=M%26A&subject.name=%7eWelcome&$empty"
 
     def request_handler(request: httpx.Request):
         assert str(request.url) == expected_url

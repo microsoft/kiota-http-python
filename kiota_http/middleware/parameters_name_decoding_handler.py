@@ -1,5 +1,5 @@
 from typing import List
-from urllib.parse import unquote, urlparse
+from urllib.parse import urlparse
 
 import httpx
 from kiota_abstractions.request_option import RequestOption
@@ -44,18 +44,21 @@ class ParametersNameDecodingHandler(BaseMiddleware):
             span.set_attribute(PARAMETERS_NAME_DECODING_KEY, current_options.enabled)
         span.end()
 
-        updated_url: str = str(request.url)  # type: ignore
+        query_params = request.url.query.decode('utf-8')
         if all(
             [
                 current_options,
                 current_options.enabled,
-                "%" in updated_url,
+                "%" in query_params,
                 current_options.characters_to_decode,
             ]
         ):
-            request.url = httpx.URL(
-                self.decode_uri_encoded_string(updated_url, current_options.characters_to_decode)
+            original_url: str = str(request.url)  # type: ignore
+            decoded_query_parameters_string = self.decode_uri_encoded_string(
+                query_params, current_options.characters_to_decode
             )
+            new_url = original_url.replace(query_params, decoded_query_parameters_string)
+            request.url = httpx.URL(new_url)
         response = await super().send(request, transport)
         return response
 
@@ -80,27 +83,18 @@ class ParametersNameDecodingHandler(BaseMiddleware):
         """Decodes a uri encoded url string"""
         if not original or not characters_to_decode:
             return original
+        symbols_to_replace = [
+            (f"%{ord(x):X}", x) for x in characters_to_decode if f"%{ord(x):X}" in original
+        ]
 
-        query_params = urlparse(original).query
-        if not query_params:
-            return original
-        encode_decode = {
-            f"%{ord(decoded_value):0>2x}": decoded_value
-            for decoded_value in characters_to_decode
-        }
-        decoded_params = []
-        query_name_value = query_params.split("&")
-        for name_value in query_name_value:
-            if "=" in name_value and len(name_value.split("=")) > 1:
-                name, value = name_value.split("=")
-            else:
-                # &{param}= and &{param} are valid cases
-                name = name_value
-                value = ""
-            for encoded in encode_decode:
-                name = name.replace(encoded, encode_decode[encoded])
-            if value:
-                decoded_params.append(f"{name}={value}")
-            else:
-                decoded_params.append(f"{name}")
-        return original.replace(query_params, "&".join(decoded_params))
+        encoded_parameter_values = [
+            part.split('=')[0] for part in original.split('&') if '%' in part
+        ]
+
+        for parameter in encoded_parameter_values:
+            for symbol_to_replace in symbols_to_replace:
+                if symbol_to_replace[0] in parameter:
+                    new_parameter = parameter.replace(symbol_to_replace[0], symbol_to_replace[1])
+                    original = original.replace(parameter, new_parameter)
+
+        return original

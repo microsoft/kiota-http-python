@@ -50,8 +50,8 @@ async def test_decodes_query_parameter_names_only():
     
     def request_handler(request: httpx.Request):
         return httpx.Response(200, json={"text": "Hello, world!"})
-    handler = ParametersNameDecodingHandler()
     
+    handler = ParametersNameDecodingHandler()
     for encoded, decoded in encoded_decoded:
         request = httpx.Request('GET', encoded)
         mock_transport = httpx.MockTransport(request_handler)

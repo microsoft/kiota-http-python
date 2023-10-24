@@ -46,6 +46,8 @@ async def test_decodes_query_parameter_names_only():
     ("https://google.com/?q=M%26A", "https://google.com/?q=M%26A"), # Values are not decoded
     ("https://google.com/?q%2D1=M%26A", "https://google.com/?q-1=M%26A"), # Values are not decoded but params are
     ("https://google.com/?q%2D1&q=M%26A=M%26A", "https://google.com/?q-1&q=M%26A=M%26A"), # Values are not decoded but params are
+    ("https://graph.microsoft.com?%24count=true&query=%24top&created%2Din=2022-10-05&q=1%2b2&q2=M%26A&subject%2Ename=%7eWelcome&%24empty",
+     "https://graph.microsoft.com?$count=true&query=%24top&created-in=2022-10-05&q=1%2b2&q2=M%26A&subject.name=%7eWelcome&$empty")
     ]
     
     def request_handler(request: httpx.Request):

@@ -4,6 +4,7 @@ from collections.abc import AsyncIterable, Iterable
 from datetime import datetime
 from typing import Any, Dict, Generic, List, Optional, TypeVar, Union
 from urllib import parse
+from urllib.parse import unquote
 
 import httpx
 from kiota_abstractions.api_client_builder import (
@@ -32,7 +33,7 @@ from kiota_http.middleware.parameters_name_decoding_handler import ParametersNam
 
 from ._version import VERSION
 from .kiota_client_factory import KiotaClientFactory
-from .middleware.options import ResponseHandlerOption, ParametersNameDecodingHandlerOption
+from .middleware.options import ParametersNameDecodingHandlerOption, ResponseHandlerOption
 from .observability_options import ObservabilityOptions
 
 ResponseType = Union[str, int, float, bool, datetime, bytes]
@@ -49,7 +50,6 @@ tracer = trace.get_tracer(ObservabilityOptions.get_tracer_instrumentation_name()
 
 
 class HttpxRequestAdapter(RequestAdapter, Generic[ModelType]):
-
     CLAIMS_KEY = "claims"
     BEARER_AUTHENTICATION_SCHEME = "Bearer"
     RESPONSE_AUTH_HEADER = "WWW-Authenticate"
@@ -127,11 +127,10 @@ class HttpxRequestAdapter(RequestAdapter, Generic[ModelType]):
         Returns:
             The parent span.
         """
-        characters_to_decode = ParametersNameDecodingHandlerOption().characters_to_decode
-        uri_template = ParametersNameDecodingHandler.decode_uri_encoded_string(
-            request_info.url_template, characters_to_decode
-        )
-        parent_span_name = f"{method} - {uri_template}"
+        uri_template = (request_info.url_template if request_info.url_template else "UNKNOWN")
+        decoded_uri_template = unquote(uri_template)
+        parent_span_name = f"{method} - {decoded_uri_template}"
+
         span = tracer.start_span(parent_span_name)
         return span
 
@@ -488,7 +487,7 @@ class HttpxRequestAdapter(RequestAdapter, Generic[ModelType]):
         self,
         request_info: RequestInformation,
         parent_span: trace.Span,
-        claims: str = ""
+        claims: str = "",
     ) -> httpx.Response:
         _get_http_resp_span = self._start_local_tracing_span(
             "get_http_response_message", parent_span
@@ -584,9 +583,9 @@ class HttpxRequestAdapter(RequestAdapter, Generic[ModelType]):
         request_options = {
             self.observability_options.get_key(): self.observability_options,
             "parent_span": parent_span,
-            **request_info.request_options
+            **request_info.request_options,
         }
-        setattr(request, 'options', request_options)
+        setattr(request, "options", request_options)
 
         if content_length := request.headers.get("Content-Length", None):
             otel_attributes.update({SpanAttributes.HTTP_REQUEST_CONTENT_LENGTH: content_length})

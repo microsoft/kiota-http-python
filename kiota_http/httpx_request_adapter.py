@@ -175,6 +175,8 @@ class HttpxRequestAdapter(RequestAdapter, Generic[ModelType]):
             if self._should_return_none(response):
                 return None
             root_node = await self.get_root_parse_node(response, parent_span, parent_span)
+            if root_node is None:
+                return None
             _deserialized_span = self._start_local_tracing_span("get_object_value", parent_span)
             value = root_node.get_object_value(parsable_factory)
             parent_span.set_attribute(DESERIALIZED_MODEL_NAME_KEY, value.__class__.__name__)

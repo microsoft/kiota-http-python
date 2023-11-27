@@ -20,7 +20,7 @@ flit==3.9.0
 
 flit-core==3.9.0
 
-idna==3.4
+idna==3.6
 
 iniconfig==2.0.0
 

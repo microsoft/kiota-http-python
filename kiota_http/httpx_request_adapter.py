@@ -200,7 +200,7 @@ class HttpxRequestAdapter(RequestAdapter, Generic[ModelType]):
         self,
         request_info: RequestInformation,
         parsable_factory: ParsableFactory,
-        error_map: Dict[str, ParsableFactory] = {},
+        error_map: Dict[str, ParsableFactory],
     ) -> Optional[List[ModelType]]:
         """Excutes the HTTP request specified by the given RequestInformation and returns the
         deserialized response model collection.

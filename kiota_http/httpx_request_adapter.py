@@ -490,8 +490,10 @@ class HttpxRequestAdapter(RequestAdapter, Generic[ModelType]):
                 exc = error
             else:
                 exc = APIError(
-                    ("The server returned an unexpected status code and the error registered"
-                     f" for this code failed to deserialize: {type(error)}"),
+                    (
+                        "The server returned an unexpected status code and the error registered"
+                        f" for this code failed to deserialize: {type(error)}"
+                    ),
                     response_status_code,
                     response_headers,
                 )

@@ -62,9 +62,7 @@ def test_set_base_url_for_request_information(request_adapter, request_info):
     assert request_info.path_parameters["baseurl"] == BASE_URL
 
 
-def test_get_request_from_request_information(
-    request_adapter, request_info, mock_otel_span
-):
+def test_get_request_from_request_information(request_adapter, request_info, mock_otel_span):
     request_info.http_method = Method.GET
     request_info.url = BASE_URL
     request_info.content = bytes("hello world", "utf_8")
@@ -74,9 +72,7 @@ def test_get_request_from_request_information(
 
 
 def test_get_response_handler(request_adapter, request_info):
-    response_handler_option = ResponseHandlerOption(
-        response_handler=NativeResponseHandler()
-    )
+    response_handler_option = ResponseHandlerOption(response_handler=NativeResponseHandler())
 
     request_info.http_method = Method.GET
     request_info.url = BASE_URL
@@ -104,15 +100,26 @@ async def test_get_root_parse_node(request_adapter, simple_success_response):
 
 
 @pytest.mark.asyncio
-async def test_does_not_throw_failed_responses_on_success(
-    request_adapter, simple_success_response
+async def test_get_root_parse_node_no_content_type_header_return_null(
+    request_adapter, mock_primitive_response_with_no_content_type_header
 ):
+    assert mock_primitive_response_with_no_content_type_header.status_code == 200
+    content_type = request_adapter.get_response_content_type(
+        mock_primitive_response_with_no_content_type_header
+    )
+    assert not content_type
+    result = await request_adapter.get_root_parse_node(
+        mock_primitive_response_with_no_content_type_header, None, None
+    )
+    assert result is None
+
+
+@pytest.mark.asyncio
+async def test_does_not_throw_failed_responses_on_success(request_adapter, simple_success_response):
     try:
         assert simple_success_response.text == '{"message": "Success!"}'
         assert simple_success_response.status_code == 200
-        content_type = request_adapter.get_response_content_type(
-            simple_success_response
-        )
+        content_type = request_adapter.get_response_content_type(simple_success_response)
         assert content_type == "application/json"
     except APIError as e:
         assert False, f"'Function raised an exception {e}"
@@ -129,9 +136,7 @@ async def test_throw_failed_responses_null_error_map(
 
     with pytest.raises(APIError) as e:
         span = mock_otel_span
-        await request_adapter.throw_failed_responses(
-            simple_error_response, None, span, span
-        )
+        await request_adapter.throw_failed_responses(simple_error_response, None, span, span)
     assert (
         str(e.value.message) == "The server returned an unexpected status code and"
         " no error class is registered for this code 404"
@@ -173,7 +178,10 @@ async def test_throw_failed_responses_not_apierror(
     with pytest.raises(Exception) as e:
         span = mock_otel_span
         await request_adapter.throw_failed_responses(resp, mock_error_map, span, span)
-    assert str(e.value.message) == "Unexpected error type: <class 'Exception'>"
+    assert ("The server returned an unexpected status code and the error registered"
+            " for this code failed to deserialize") in str(
+        e.value.message
+    )
 
 
 @pytest.mark.asyncio
@@ -188,23 +196,17 @@ async def test_throw_failed_responses(
 
     with pytest.raises(APIError) as e:
         span = mock_otel_span
-        await request_adapter.throw_failed_responses(
-            resp, mock_apierror_map, span, span
-        )
+        await request_adapter.throw_failed_responses(resp, mock_apierror_map, span, span)
     assert str(e.value.message) == "Custom Internal Server Error"
 
 
 @pytest.mark.asyncio
 async def test_send_async(request_adapter, request_info, mock_user_response, mock_user):
-    request_adapter.get_http_response_message = AsyncMock(
-        return_value=mock_user_response
-    )
+    request_adapter.get_http_response_message = AsyncMock(return_value=mock_user_response)
     request_adapter.get_root_parse_node = AsyncMock(return_value=mock_user)
     resp = await request_adapter.get_http_response_message(request_info)
     assert resp.headers.get("content-type") == "application/json"
-    final_result = await request_adapter.send_async(
-        request_info, MockResponseObject, {}
-    )
+    final_result = await request_adapter.send_async(request_info, MockResponseObject, {})
     assert final_result.display_name == mock_user.display_name
     assert final_result.office_location == mock_user.office_location
     assert final_result.business_phones == mock_user.business_phones
@@ -215,18 +217,12 @@ async def test_send_async(request_adapter, request_info, mock_user_response, moc
 
 
 @pytest.mark.asyncio
-async def test_send_collection_async(
-    request_adapter, request_info, mock_users_response, mock_user
-):
-    request_adapter.get_http_response_message = AsyncMock(
-        return_value=mock_users_response
-    )
+async def test_send_collection_async(request_adapter, request_info, mock_users_response, mock_user):
+    request_adapter.get_http_response_message = AsyncMock(return_value=mock_users_response)
     request_adapter.get_root_parse_node = AsyncMock(return_value=mock_user)
     resp = await request_adapter.get_http_response_message(request_info)
     assert resp.headers.get("content-type") == "application/json"
-    final_result = await request_adapter.send_collection_async(
-        request_info, MockResponseObject, {}
-    )
+    final_result = await request_adapter.send_collection_async(request_info, MockResponseObject, {})
     assert final_result[0].display_name == mock_user.display_name
     assert final_result[1].office_location == mock_user.office_location
     assert final_result[0].business_phones == mock_user.business_phones
@@ -246,9 +242,7 @@ async def test_send_collection_of_primitive_async(
     request_adapter.get_root_parse_node = AsyncMock(return_value=mock_primitive)
     resp = await request_adapter.get_http_response_message(request_info)
     assert resp.headers.get("content-type") == "application/json"
-    final_result = await request_adapter.send_collection_of_primitive_async(
-        request_info, float, {}
-    )
+    final_result = await request_adapter.send_collection_of_primitive_async(request_info, float, {})
     assert final_result == [12.1, 12.2, 12.3, 12.4, 12.5]
 
 
@@ -256,9 +250,7 @@ async def test_send_collection_of_primitive_async(
 async def test_send_primitive_async(
     request_adapter, request_info, mock_primitive_response, mock_primitive
 ):
-    request_adapter.get_http_response_message = AsyncMock(
-        return_value=mock_primitive_response
-    )
+    request_adapter.get_http_response_message = AsyncMock(return_value=mock_primitive_response)
     request_adapter.get_root_parse_node = AsyncMock(return_value=mock_primitive)
     resp = await request_adapter.get_http_response_message(request_info)
     assert resp.headers.get("content-type") == "application/json"
@@ -276,20 +268,50 @@ async def test_send_primitive_async_bytes(
     request_adapter.get_root_parse_node = AsyncMock(return_value=mock_primitive)
     resp = await request_adapter.get_http_response_message(request_info)
     assert (
-        resp.headers.get("content-type")
-        == "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        resp.headers.get("content-type") ==
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
     )
     final_result = await request_adapter.send_primitive_async(request_info, "bytes", {})
     assert final_result == b"Hello World"
 
 
 @pytest.mark.asyncio
+async def test_send_primitive_async_no_content_returns_null(
+    request_adapter, request_info, mock_primitive_response_with_no_content, mock_primitive
+):
+    request_adapter.get_http_response_message = AsyncMock(
+        return_value=mock_primitive_response_with_no_content
+    )
+    request_adapter.get_root_parse_node = AsyncMock(return_value=mock_primitive)
+    resp = await request_adapter.get_http_response_message(request_info)
+    assert (
+        resp.headers.get("content-type") ==
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    )
+    final_result = await request_adapter.send_primitive_async(request_info, "bytes", {})
+    assert final_result is None
+
+
+@pytest.mark.asyncio
+async def test_send_primitive_async_no_content_type_header_returns_null(
+    request_adapter, request_info, mock_primitive_response_with_no_content_type_header,
+    mock_primitive
+):
+    request_adapter.get_http_response_message = AsyncMock(
+        return_value=mock_primitive_response_with_no_content_type_header
+    )
+    request_adapter.get_root_parse_node = AsyncMock(return_value=None)
+    resp = await request_adapter.get_http_response_message(request_info)
+    assert not resp.headers.get("content-type")
+    final_result = await request_adapter.send_primitive_async(request_info, "float", {})
+    assert final_result is None
+
+
+@pytest.mark.asyncio
 async def test_send_primitive_async_no_content(
     request_adapter, request_info, mock_no_content_response
 ):
-    request_adapter.get_http_response_message = AsyncMock(
-        return_value=mock_no_content_response
-    )
+    request_adapter.get_http_response_message = AsyncMock(return_value=mock_no_content_response)
     resp = await request_adapter.get_http_response_message(request_info)
     assert resp.headers.get("content-type") == "application/json"
     final_result = await request_adapter.send_primitive_async(request_info, float, {})
@@ -310,17 +332,13 @@ async def test_observability(
     request_adapter, request_info, mock_user_response, mock_user, mock_otel_span
 ):
     """Ensures the otel tracer and created spans are set and called correctly."""
-    request_adapter.get_http_response_message = AsyncMock(
-        return_value=mock_user_response
-    )
+    request_adapter.get_http_response_message = AsyncMock(return_value=mock_user_response)
     request_adapter.get_root_parse_node = AsyncMock(return_value=mock_user)
     resp = await request_adapter.get_http_response_message(request_info)
     assert resp.headers.get("content-type") == "application/json"
     with patch("kiota_http.httpx_request_adapter.tracer") as tracer:
         tracer.start_span(return_value=mock_otel_span)
-        final_result = await request_adapter.send_async(
-            request_info, MockResponseObject, {}
-        )
+        final_result = await request_adapter.send_async(request_info, MockResponseObject, {})
         assert tracer is not None
         # check if the send_async span is created
         tracer.start_span.assert_called
@@ -332,23 +350,19 @@ async def test_observability(
 async def test_retries_on_cae_failure(
     request_adapter, request_info_mock, mock_cae_failure_response, mock_otel_span
 ):
-    request_adapter._http_client.send = AsyncMock(
-        return_value=mock_cae_failure_response
-    )
+    request_adapter._http_client.send = AsyncMock(return_value=mock_cae_failure_response)
     request_adapter._authentication_provider.authenticate_request = AsyncMock()
-    resp = await request_adapter.get_http_response_message(
-        request_info_mock, mock_otel_span
-    )
+    resp = await request_adapter.get_http_response_message(request_info_mock, mock_otel_span)
     assert isinstance(resp, httpx.Response)
     calls = [
         call(request_info_mock, {}),
         call(
             request_info_mock,
             {
-                "claims": "eyJhY2Nlc3NfdG9rZW4iOnsibmJmIjp7ImVzc2VudGlhbCI6dHJ1ZSwgInZhbHVlIjoiMTYwNDEwNjY1MSJ9fX0"
+                "claims":
+                ("eyJhY2Nlc3NfdG9rZW4iOnsibmJmIjp7ImVzc2VudGlhbCI6dHJ1ZSwgInZhbH"
+                 "VlIjoiMTYwNDEwNjY1MSJ9fX0")
             },
         ),
     ]
-    request_adapter._authentication_provider.authenticate_request.assert_has_awaits(
-        calls
-    )
+    request_adapter._authentication_provider.authenticate_request.assert_has_awaits(calls)

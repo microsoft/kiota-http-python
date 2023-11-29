@@ -1,11 +1,11 @@
 from dataclasses import dataclass
+from unittest.mock import AsyncMock
 
 import httpx
 import pytest
-from unittest.mock import AsyncMock
 from kiota_abstractions.api_error import APIError
-from kiota_abstractions.method import Method
 from kiota_abstractions.authentication import AnonymousAuthenticationProvider
+from kiota_abstractions.method import Method
 from kiota_abstractions.request_information import RequestInformation
 from opentelemetry import trace
 
@@ -187,8 +187,25 @@ def mock_primitive_response_bytes(mocker):
 
 
 @pytest.fixture
+def mock_primitive_response_with_no_content(mocker):
+    return httpx.Response(
+        200,
+        headers={
+            "Content-Type":
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        }
+    )
+
+
+@pytest.fixture
+def mock_primitive_response_with_no_content_type_header(mocker):
+    return httpx.Response(200, content=b'Hello World')
+
+
+@pytest.fixture
 def mock_no_content_response(mocker):
     return httpx.Response(204, json="Radom JSON", headers={"Content-Type": "application/json"})
+
 
 tracer = trace.get_tracer(__name__)
 
@@ -196,6 +213,7 @@ tracer = trace.get_tracer(__name__)
 @pytest.fixture
 def mock_otel_span():
     return tracer.start_span("mock")
+
 
 @pytest.fixture
 def mock_cae_failure_response(mocker):
@@ -205,8 +223,7 @@ def mock_cae_failure_response(mocker):
     claims="eyJhY2Nlc3NfdG9rZW4iOnsibmJmIjp7ImVzc2VudGlhbCI6dHJ1ZSwgInZhbHVlIjoiMTYwNDEwNjY1MSJ9fX0="
     """
     return httpx.Response(
-        401,
-        headers={
+        401, headers={
             "Content-Type": "application/json",
             "WWW-Authenticate": auth_header
         }

@@ -17,5 +17,9 @@ class RequestError(KiotaHTTPXError):
     """Raised for request building errors."""
 
 
+class ResponseError(KiotaHTTPXError):
+    """Raised for response errors."""
+
+
 class RedirectError(KiotaHTTPXError):
     """Raised when a redirect has errors."""

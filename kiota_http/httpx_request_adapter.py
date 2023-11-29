@@ -28,11 +28,17 @@ from kiota_abstractions.store import BackingStoreFactory, BackingStoreFactorySin
 from opentelemetry import trace
 from opentelemetry.semconv.trace import SpanAttributes
 
-from kiota_http._exceptions import BackingStoreError, DeserializationError, RequestError
+from kiota_http._exceptions import (
+    BackingStoreError,
+    DeserializationError,
+    RequestError,
+    ResponseError,
+)
 from kiota_http.middleware.parameters_name_decoding_handler import ParametersNameDecodingHandler
 
 from ._version import VERSION
 from .kiota_client_factory import KiotaClientFactory
+from .middleware import ParametersNameDecodingHandler
 from .middleware.options import ParametersNameDecodingHandlerOption, ResponseHandlerOption
 from .observability_options import ObservabilityOptions
 
@@ -61,6 +67,7 @@ class HttpxRequestAdapter(RequestAdapter, Generic[ModelType]):
         serialization_writer_factory:
         SerializationWriterFactory = SerializationWriterFactoryRegistry(),
         http_client: httpx.AsyncClient = KiotaClientFactory.create_with_default_middleware(),
+        base_url: str = "",
         observability_options=ObservabilityOptions(),
     ) -> None:
         if not authentication_provider:
@@ -78,7 +85,7 @@ class HttpxRequestAdapter(RequestAdapter, Generic[ModelType]):
             observability_options = ObservabilityOptions()
 
         self._http_client = http_client
-        self._base_url: str = ""
+        self._base_url: str = base_url
         self.observability_options = observability_options
 
     @property
@@ -127,8 +134,12 @@ class HttpxRequestAdapter(RequestAdapter, Generic[ModelType]):
         Returns:
             The parent span.
         """
+
         uri_template = (request_info.url_template if request_info.url_template else "UNKNOWN")
-        decoded_uri_template = unquote(uri_template)
+        characters_to_decode_for_uri_template = ['$', '.', '-', '~']
+        decoded_uri_template = ParametersNameDecodingHandler().decode_uri_encoded_string(
+            uri_template, characters_to_decode_for_uri_template
+        )
         parent_span_name = f"{method} - {decoded_uri_template}"
 
         span = tracer.start_span(parent_span_name)
@@ -209,7 +220,6 @@ class HttpxRequestAdapter(RequestAdapter, Generic[ModelType]):
                 parent_span.record_exception(REQUEST_IS_NULL)
                 raise REQUEST_IS_NULL
             response = await self.get_http_response_message(request_info, parent_span)
-
             response_handler = self.get_response_handler(request_info)
             if response_handler:
                 parent_span.add_event(RESPONSE_HANDLER_EVENT_INVOKED_KEY)
@@ -223,10 +233,12 @@ class HttpxRequestAdapter(RequestAdapter, Generic[ModelType]):
                 "get_collection_of_object_values", parent_span
             )
             root_node = await self.get_root_parse_node(response, parent_span, parent_span)
-            result = root_node.get_collection_of_object_values(parsable_factory)
-            parent_span.set_attribute(DESERIALIZED_MODEL_NAME_KEY, result.__class__.__name__)
-            _deserialized_span.end()
-            return result
+            if root_node:
+                result = root_node.get_collection_of_object_values(parsable_factory)
+                parent_span.set_attribute(DESERIALIZED_MODEL_NAME_KEY, result.__class__.__name__)
+                _deserialized_span.end()
+                return result
+            return None
         finally:
             parent_span.end()
 
@@ -255,7 +267,6 @@ class HttpxRequestAdapter(RequestAdapter, Generic[ModelType]):
                 raise REQUEST_IS_NULL
 
             response = await self.get_http_response_message(request_info, parent_span)
-
             response_handler = self.get_response_handler(request_info)
             if response_handler:
                 parent_span.add_event(RESPONSE_HANDLER_EVENT_INVOKED_KEY)
@@ -264,16 +275,17 @@ class HttpxRequestAdapter(RequestAdapter, Generic[ModelType]):
             await self.throw_failed_responses(response, error_map, parent_span, parent_span)
             if self._should_return_none(response):
                 return None
-            root_node = await self.get_root_parse_node(response, parent_span, parent_span)
 
             _deserialized_span = self._start_local_tracing_span(
                 "get_collection_of_primitive_values", parent_span
             )
             root_node = await self.get_root_parse_node(response, parent_span, parent_span)
-            values = root_node.get_collection_of_primitive_values(response_type)
-            parent_span.set_attribute(DESERIALIZED_MODEL_NAME_KEY, values.__class__.__name__)
-            _deserialized_span.end()
-            return values
+            if root_node:
+                values = root_node.get_collection_of_primitive_values(response_type)
+                parent_span.set_attribute(DESERIALIZED_MODEL_NAME_KEY, values.__class__.__name__)
+                _deserialized_span.end()
+                return values
+            return None
         finally:
             parent_span.end()
 
@@ -315,7 +327,8 @@ class HttpxRequestAdapter(RequestAdapter, Generic[ModelType]):
                 return response.content
             _deserialized_span = self._start_local_tracing_span("get_root_parse_node", parent_span)
             root_node = await self.get_root_parse_node(response, parent_span, parent_span)
-            value = None
+            if not root_node:
+                return None
             if response_type == "str":
                 value = root_node.get_str_value()
             if response_type == "int":
@@ -331,7 +344,7 @@ class HttpxRequestAdapter(RequestAdapter, Generic[ModelType]):
                 _deserialized_span.end()
                 return value
 
-            exc = TypeError(f"Unable to deserialize type: {response_type!r}")
+            exc = TypeError(f"Error handling the response, unexpected type {response_type!r}")
             parent_span.record_exception(exc)
             _deserialized_span.end()
             raise exc
@@ -356,7 +369,6 @@ class HttpxRequestAdapter(RequestAdapter, Generic[ModelType]):
                 raise REQUEST_IS_NULL
 
             response = await self.get_http_response_message(request_info, parent_span)
-
             response_handler = self.get_response_handler(request_info)
             if response_handler:
                 parent_span.add_event(RESPONSE_HANDLER_EVENT_INVOKED_KEY)
@@ -396,13 +408,13 @@ class HttpxRequestAdapter(RequestAdapter, Generic[ModelType]):
             payload = response.content
             response_content_type = self.get_response_content_type(response)
             if not response_content_type:
-                raise DeserializationError("No response content type found for deserialization")
+                return None
             return self._parse_node_factory.get_root_parse_node(response_content_type, payload)
         finally:
             span.end()
 
     def _should_return_none(self, response: httpx.Response) -> bool:
-        return response.status_code == 204
+        return response.status_code == 204 or not bool(response.content)
 
     async def throw_failed_responses(
         self,
@@ -469,6 +481,8 @@ class HttpxRequestAdapter(RequestAdapter, Generic[ModelType]):
             _get_obj_ctx = trace.set_span_in_context(_throw_failed_resp_span)
             _get_obj_span = tracer.start_span("get_object_value", context=_get_obj_ctx)
 
+            if not root_node:
+                return None
             error = root_node.get_object_value(error_class)
             if isinstance(error, APIError):
                 error.response_headers = response_headers
@@ -476,7 +490,10 @@ class HttpxRequestAdapter(RequestAdapter, Generic[ModelType]):
                 exc = error
             else:
                 exc = APIError(
-                    f"Unexpected error type: {type(error)}",
+                    (
+                        "The server returned an unexpected status code and the error registered"
+                        f" for this code failed to deserialize: {type(error)}"
+                    ),
                     response_status_code,
                     response_headers,
                 )
@@ -509,6 +526,8 @@ class HttpxRequestAdapter(RequestAdapter, Generic[ModelType]):
             request_info, _get_http_resp_span, parent_span
         )
         resp = await self._http_client.send(request)
+        if not resp:
+            raise ResponseError("Unable to get response from request")
         parent_span.set_attribute(SpanAttributes.HTTP_STATUS_CODE, resp.status_code)
         if http_version := resp.http_version:
             parent_span.set_attribute(SpanAttributes.HTTP_FLAVOR, http_version)

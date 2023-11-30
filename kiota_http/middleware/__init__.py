@@ -1,4 +1,5 @@
 from .async_kiota_transport import AsyncKiotaTransport
+from .headers_inspection_handler import HeadersInspectionHandler
 from .middleware import BaseMiddleware, MiddlewarePipeline
 from .parameters_name_decoding_handler import ParametersNameDecodingHandler
 from .redirect_handler import RedirectHandler

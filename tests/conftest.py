@@ -11,7 +11,7 @@ from opentelemetry import trace
 
 from kiota_http.httpx_request_adapter import HttpxRequestAdapter
 
-from .helpers import MockErrorObject, MockResponseObject, OfficeLocation
+from .helpers import MockTransport, MockErrorObject, MockResponseObject, OfficeLocation
 
 
 @pytest.fixture
@@ -22,6 +22,10 @@ def auth_provider():
 @pytest.fixture
 def request_info():
     return RequestInformation()
+
+@pytest.fixture
+def mock_async_transport():
+    return MockTransport()
 
 
 @pytest.fixture

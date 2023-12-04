@@ -13,7 +13,7 @@ class RedirectHandlerOption(RequestOption):
 
     def __init__(
         self,
-        max_redirect: int = DEFAULT_MAX_REDIRECT,
+        max_redirect: int = None,
         should_redirect: bool = True,
         allow_redirect_on_scheme_change: bool = False
     ) -> None:
@@ -25,8 +25,10 @@ class RedirectHandlerOption(RequestOption):
             raise ValueError(
                 "MaxLimitExceeded. Negative value for max_redirect property is invalid"
             )
+        else:
+            self._max_redirect = self.DEFAULT_MAX_REDIRECT
+        
 
-        self._max_redirect = max_redirect
         self._should_redirect = should_redirect
         self._allow_redirect_on_scheme_change = allow_redirect_on_scheme_change
 

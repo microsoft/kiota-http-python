@@ -31,9 +31,9 @@ class RedirectHandler(BaseMiddleware):
         super().__init__()
         self.options = options
         self.redirect_on_status_codes: typing.Set[int] = self.DEFAULT_REDIRECT_STATUS_CODES
-        self.history: typing.List[httpx.Request] = []
 
-    def increment(self, response, max_redirect) -> bool:
+    
+    def increment(self, response, max_redirect, history) -> bool:
         """Increment the redirect attempts for this request.
         Args
             response(httpx.Response): A httpx response object.
@@ -41,8 +41,7 @@ class RedirectHandler(BaseMiddleware):
             bool: Whether further redirect attempts are remaining.
             False if exhausted; True if more redirect attempts available.
         """
-
-        self.history.append(response.request)
+        history.append(response.request)
         return max_redirect >= 0
 
     def get_redirect_location(self, response: httpx.Response) -> typing.Union[str, bool, None]:
@@ -57,10 +56,9 @@ class RedirectHandler(BaseMiddleware):
         if response.status_code in self.redirect_on_status_codes:
             return response.headers.get('location')
         return None
-
-    async def send(
-        self, request: httpx.Request, transport: httpx.AsyncBaseTransport
-    ) -> httpx.Response:
+    
+    
+    async def send(self, request: httpx.Request, transport: httpx.AsyncBaseTransport) -> httpx.Response:
         """Sends the http request object to the next middleware or redirects
         the request if necessary.
         """
@@ -69,28 +67,35 @@ class RedirectHandler(BaseMiddleware):
         _enable_span.set_attribute(REDIRECT_ENABLE_KEY, True)
         _enable_span.end()
 
-        retryable = True
-        _redirect_span = self._create_observability_span(
-            request, f"RedirectHandler_send - redirect {len(self.history)}"
-        )
-        while retryable:
+        max_redirect = current_options.max_redirect
+        history: typing.List[httpx.Request] = []
+
+        while max_redirect >= 0:
+            _redirect_span = self._create_observability_span(
+                request, f"RedirectHandler_send - redirect {len(history)}"
+            )
             response = await super().send(request, transport)
             _redirect_span.set_attribute(SpanAttributes.HTTP_STATUS_CODE, response.status_code)
             redirect_location = self.get_redirect_location(response)
+
             if redirect_location and current_options.should_redirect:
-                current_options.max_redirect -= 1
-                retryable = self.increment(response, current_options.max_redirect)
-                _redirect_span.set_attribute(REDIRECT_COUNT_KEY, len(self.history))
+                max_redirect -= 1
+                if not self.increment(response, max_redirect, history[:]):
+                    break
+                _redirect_span.set_attribute(REDIRECT_COUNT_KEY, len(history))
                 new_request = self._build_redirect_request(request, response)
                 request = new_request
                 continue
-            response.history = self.history
+
+            response.history = history
             break
-        if not retryable:
+
+        if max_redirect < 0:
             exc = RedirectError(f"Too many redirects. {response.history}")
             _redirect_span.record_exception(exc)
             _redirect_span.end()
             raise exc
+
         return response
 
     def _get_current_options(self, request: httpx.Request) -> RedirectHandlerOption:

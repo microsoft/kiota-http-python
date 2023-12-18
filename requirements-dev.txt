@@ -94,4 +94,4 @@ uritemplate==4.1.1
 
 opentelemetry-api==1.22.0
 
-opentelemetry-sdk==1.21.0
+opentelemetry-sdk==1.22.0

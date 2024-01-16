@@ -27,8 +27,6 @@ class RedirectHandlerOption(RequestOption):
             )
         else:
             self._max_redirect = max_redirect
-        
-
         self._should_redirect = should_redirect
         self._allow_redirect_on_scheme_change = allow_redirect_on_scheme_change
 

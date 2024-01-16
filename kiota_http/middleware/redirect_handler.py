@@ -32,7 +32,6 @@ class RedirectHandler(BaseMiddleware):
         self.options = options
         self.redirect_on_status_codes: typing.Set[int] = self.DEFAULT_REDIRECT_STATUS_CODES
 
-    
     def increment(self, response, max_redirect, history) -> bool:
         """Increment the redirect attempts for this request.
         Args
@@ -56,9 +55,10 @@ class RedirectHandler(BaseMiddleware):
         if response.status_code in self.redirect_on_status_codes:
             return response.headers.get('location')
         return None
-    
-    
-    async def send(self, request: httpx.Request, transport: httpx.AsyncBaseTransport) -> httpx.Response:
+
+    async def send(
+        self, request: httpx.Request, transport: httpx.AsyncBaseTransport
+    ) -> httpx.Response:
         """Sends the http request object to the next middleware or redirects
         the request if necessary.
         """

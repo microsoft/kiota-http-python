@@ -13,7 +13,7 @@ class RedirectHandlerOption(RequestOption):
 
     def __init__(
         self,
-        max_redirect: int = None,
+        max_redirect: int = DEFAULT_MAX_REDIRECT,
         should_redirect: bool = True,
         allow_redirect_on_scheme_change: bool = False
     ) -> None:

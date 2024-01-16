@@ -26,7 +26,7 @@ class RedirectHandlerOption(RequestOption):
                 "MaxLimitExceeded. Negative value for max_redirect property is invalid"
             )
         else:
-            self._max_redirect = self.DEFAULT_MAX_REDIRECT
+            self._max_redirect = max_redirect
         
 
         self._should_redirect = should_redirect

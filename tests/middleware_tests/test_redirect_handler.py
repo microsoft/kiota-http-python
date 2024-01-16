@@ -44,9 +44,10 @@ def test_increment_redirects():
     """
     request = httpx.Request('GET', BASE_URL)
     response = httpx.Response(301, request=request)
+    history = []
 
     handler = RedirectHandler()
-    assert handler.increment(response, handler.options.max_redirect)
+    assert handler.increment(response, handler.options.max_redirect, history=history)
 
 
 def test_same_origin(mock_redirect_handler):

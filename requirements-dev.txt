@@ -10,7 +10,7 @@ colorama==0.4.6
 
 coverage[toml]==7.4.0
 
-dill==0.3.7
+dill==0.3.8
 
 docutils==0.20.1
 

@@ -2,7 +2,7 @@
 
 astroid==3.0.2
 
-certifi==2023.11.17
+certifi==2024.2.2
 
 charset-normalizer==3.3.2
 

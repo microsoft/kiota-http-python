@@ -17,7 +17,9 @@ from kiota_http.middleware.options import ResponseHandlerOption
 
 from .helpers import MockResponseObject
 
+APPLICATION_JSON = "application/json"
 BASE_URL = "https://graph.microsoft.com"
+
 
 
 def test_create_request_adapter(auth_provider):
@@ -53,7 +55,7 @@ def test_get_serialization_writer_factory(request_adapter):
 
 def test_get_response_content_type(request_adapter, simple_success_response):
     content_type = request_adapter.get_response_content_type(simple_success_response)
-    assert content_type == "application/json"
+    assert content_type == APPLICATION_JSON
 
 
 def test_set_base_url_for_request_information(request_adapter, request_info):

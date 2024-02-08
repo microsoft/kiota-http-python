@@ -451,9 +451,9 @@ class HttpxRequestAdapter(RequestAdapter, Generic[ModelType]):
                 attribute_span.record_exception(exc)
                 raise exc
 
-            if (response_status_code_str not in error_map) and (
-                (400 <= response_status_code < 500 and "4XX" not in error_map) or
-                (500 <= response_status_code < 600 and "5XX" not in error_map)
+            if (
+                response_status_code_str not in error_map
+                and self._error_class_not_in_error_mapping(error_map, response_status_code)
             ):
                 exc = APIError(
                     "The server returned an unexpected status code and no error class is registered"
@@ -466,12 +466,14 @@ class HttpxRequestAdapter(RequestAdapter, Generic[ModelType]):
             _throw_failed_resp_span.set_attribute("status_message", "received_error_response")
 
             error_class = None
-            if response_status_code_str in error_map:
+            if response_status_code_str in error_map:  # Error Code 400 - <= 599
                 error_class = error_map[response_status_code_str]
-            elif 400 <= response_status_code < 500:
+            elif 400 <= response_status_code < 500 and "4XX" in error_map:  # Error code 4XX
                 error_class = error_map["4XX"]
-            elif 500 <= response_status_code < 600:
+            elif 500 <= response_status_code < 600 and "5XX" in error_map:  # Error code 5XX
                 error_class = error_map["5XX"]
+            elif "XXX" in error_map:  # Blanket case
+                error_class = error_map["XXX"]
 
             root_node = await self.get_root_parse_node(
                 response, _throw_failed_resp_span, _throw_failed_resp_span
@@ -635,3 +637,22 @@ class HttpxRequestAdapter(RequestAdapter, Generic[ModelType]):
             return request
         finally:
             parent_span.end()
+
+    def _error_class_not_in_error_mapping(
+        self, error_map: Dict[str, ParsableFactory], status_code: int
+    ) -> bool:
+        """Helper function to check if the error class corresponding to a response status code
+        is not in the error mapping.
+
+        Args:
+            error_map (Dict[str, ParsableFactory]): The error mapping.
+            status_code (int): The response status code.
+
+        Returns:
+            bool: True if the error class is not in the error mapping, False otherwise.
+        """
+
+        return (
+            (400 <= status_code < 500 and "4XX" not in error_map) or
+            (500 <= status_code < 600 and "5XX" not in error_map)
+        ) and ("XXX" not in error_map)

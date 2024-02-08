@@ -13,6 +13,9 @@ from kiota_http.httpx_request_adapter import HttpxRequestAdapter
 
 from .helpers import MockTransport, MockErrorObject, MockResponseObject, OfficeLocation
 
+@pytest.fixture
+def sample_headers():
+    return {"Content-Type": "application/json"}
 
 @pytest.fixture
 def auth_provider():
@@ -49,54 +52,42 @@ def mock_error_object():
 
 
 @pytest.fixture
-def mock_error_map():
+def mock_error_500_map():
     return {
         "500": Exception("Internal Server Error"),
     }
 
-
 @pytest.fixture
-def mock_apierror_map():
+def mock_apierror_map(sample_headers):
     return {
-        "500":
-        APIError(
-            "Custom Internal Server Error", {
-                'cache-control': 'private',
-                'transfer-encoding': 'chunked',
-                'content-type': 'application/json'
-            }, 500
-        )
+        "400": APIError("Resource not found", 400, sample_headers),
+        "500": APIError("Custom Internal Server Error", 500, sample_headers)
     }
 
-
 @pytest.fixture
-def mock_request_adapter():
-    resp = httpx.Response(
-        json={'error': 'not found'}, status_code=404, headers={"Content-Type": "application/json"}
-    )
+def mock_apierror_XXX_map(sample_headers):
+    return {"XXX": APIError("OdataError",400, sample_headers)}
+    
+@pytest.fixture
+def mock_request_adapter(sample_headers):
+    resp = httpx.Response(json={'error': 'not found'}, status_code=404, headers=sample_headers)
     mock_request_adapter = AsyncMock
     mock_request_adapter.get_http_response_message = AsyncMock(return_value=resp)
 
+@pytest.fixture
+def simple_error_response(sample_headers):
+    return httpx.Response(json={'error': 'not found'}, status_code=404, headers=sample_headers)
 
 @pytest.fixture
-def simple_error_response():
-    return httpx.Response(
-        json={'error': 'not found'}, status_code=404, headers={"Content-Type": "application/json"}
-    )
-
-
-@pytest.fixture
-def simple_success_response():
-    return httpx.Response(
-        json={'message': 'Success!'}, status_code=200, headers={"Content-Type": "application/json"}
-    )
+def simple_success_response(sample_headers):
+    return httpx.Response(json={'message': 'Success!'}, status_code=200, headers=sample_headers)
 
 
 @pytest.fixture
-def mock_user_response(mocker):
+def mock_user_response(mocker, sample_headers):
     return httpx.Response(
         200,
-        headers={"Content-Type": "application/json"},
+        headers=sample_headers,
         json={
             "@odata.context": "https://graph.microsoft.com/v1.0/$metadata#users/$entity",
             "businessPhones": ["+1 205 555 0108"],
@@ -161,25 +152,25 @@ def mock_users_response(mocker):
 
 
 @pytest.fixture
-def mock_primitive_collection_response(mocker):
+def mock_primitive_collection_response(sample_headers):
     return httpx.Response(
-        200, json=[12.1, 12.2, 12.3, 12.4, 12.5], headers={"Content-Type": "application/json"}
+        200, json=[12.1, 12.2, 12.3, 12.4, 12.5], headers=sample_headers
     )
 
 
 @pytest.fixture
-def mock_primitive(mocker):
+def mock_primitive():
     resp = MockResponseObject()
     return resp
 
 
 @pytest.fixture
-def mock_primitive_response(mocker):
-    return httpx.Response(200, json=22.3, headers={"Content-Type": "application/json"})
+def mock_primitive_response(sample_headers):
+    return httpx.Response(200, json=22.3, headers=sample_headers)
 
 
 @pytest.fixture
-def mock_primitive_response_bytes(mocker):
+def mock_primitive_response_bytes():
     return httpx.Response(
         200,
         content=b'Hello World',
@@ -191,7 +182,7 @@ def mock_primitive_response_bytes(mocker):
 
 
 @pytest.fixture
-def mock_primitive_response_with_no_content(mocker):
+def mock_primitive_response_with_no_content():
     return httpx.Response(
         200,
         headers={
@@ -202,13 +193,13 @@ def mock_primitive_response_with_no_content(mocker):
 
 
 @pytest.fixture
-def mock_primitive_response_with_no_content_type_header(mocker):
+def mock_primitive_response_with_no_content_type_header():
     return httpx.Response(200, content=b'Hello World')
 
 
 @pytest.fixture
-def mock_no_content_response(mocker):
-    return httpx.Response(204, json="Radom JSON", headers={"Content-Type": "application/json"})
+def mock_no_content_response(sample_headers):
+    return httpx.Response(204, json="Radom JSON", headers=sample_headers)
 
 
 tracer = trace.get_tracer(__name__)
@@ -220,7 +211,7 @@ def mock_otel_span():
 
 
 @pytest.fixture
-def mock_cae_failure_response(mocker):
+def mock_cae_failure_response():
     auth_header = """Bearer authorization_uri="https://login.windows.net/common/oauth2/authorize",
     client_id="00000003-0000-0000-c000-000000000000",
     error="insufficient_claims",

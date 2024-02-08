@@ -1,6 +1,6 @@
 # Microsoft Kiota HTTP library
 [![PyPI version](https://badge.fury.io/py/microsoft-kiota-http.svg)](https://badge.fury.io/py/microsoft-kiota-http)
-[![CI Actions Status](https://github.com/microsoft/kiota-http-python/actions/workflows/build_publish.yml/badge.svg?branch=main)](https://github.com/microsoft/kiota-http-python/actions)
+[![CI Actions Status](https://github.com/microsoft/kiota-http-python/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/microsoft/kiota-http-python/actions)
 [![Downloads](https://pepy.tech/badge/microsoft-kiota-http)](https://pepy.tech/project/microsoft-kiota-http)
 
 The Microsoft Kiota HTTP Library is a python HTTP implementation with HTTPX library.

@@ -146,7 +146,7 @@ async def test_throw_failed_responses_null_error_map(
 
 @pytest.mark.asyncio
 async def test_throw_failed_responses_no_error_class(
-    request_adapter, simple_error_response, mock_error_map, mock_otel_span
+    request_adapter, simple_error_response, mock_error_500_map, mock_otel_span
 ):
     assert simple_error_response.text == '{"error": "not found"}'
     assert simple_error_response.status_code == 404
@@ -156,7 +156,7 @@ async def test_throw_failed_responses_no_error_class(
     with pytest.raises(APIError) as e:
         span = mock_otel_span
         await request_adapter.throw_failed_responses(
-            simple_error_response, mock_error_map, span, span
+            simple_error_response, mock_error_500_map, span, span
         )
     assert (
         str(e.value.message) == "The server returned an unexpected status code and"
@@ -167,7 +167,7 @@ async def test_throw_failed_responses_no_error_class(
 
 @pytest.mark.asyncio
 async def test_throw_failed_responses_not_apierror(
-    request_adapter, mock_error_map, mock_error_object, mock_otel_span
+    request_adapter, mock_error_500_map, mock_error_object, mock_otel_span
 ):
     request_adapter.get_root_parse_node = AsyncMock(return_value=mock_error_object)
     resp = httpx.Response(status_code=500, headers={"Content-Type": "application/json"})
@@ -177,7 +177,7 @@ async def test_throw_failed_responses_not_apierror(
 
     with pytest.raises(Exception) as e:
         span = mock_otel_span
-        await request_adapter.throw_failed_responses(resp, mock_error_map, span, span)
+        await request_adapter.throw_failed_responses(resp, mock_error_500_map, span, span)
     assert ("The server returned an unexpected status code and the error registered"
             " for this code failed to deserialize") in str(
         e.value.message
@@ -185,7 +185,22 @@ async def test_throw_failed_responses_not_apierror(
 
 
 @pytest.mark.asyncio
-async def test_throw_failed_responses(
+async def test_throw_failed_responses_4XX(
+    request_adapter, mock_apierror_map, mock_error_object, mock_otel_span
+):
+    request_adapter.get_root_parse_node = AsyncMock(return_value=mock_error_object)
+    resp = httpx.Response(status_code=400, headers={"Content-Type": "application/json"})
+    assert resp.status_code == 400
+    content_type = request_adapter.get_response_content_type(resp)
+    assert content_type == "application/json"
+
+    with pytest.raises(APIError) as e:
+        span = mock_otel_span
+        await request_adapter.throw_failed_responses(resp, mock_apierror_map, span, span)
+    assert str(e.value.message) == "Resource not found"
+    
+@pytest.mark.asyncio
+async def test_throw_failed_responses_5XX(
     request_adapter, mock_apierror_map, mock_error_object, mock_otel_span
 ):
     request_adapter.get_root_parse_node = AsyncMock(return_value=mock_error_object)
@@ -198,6 +213,22 @@ async def test_throw_failed_responses(
         span = mock_otel_span
         await request_adapter.throw_failed_responses(resp, mock_apierror_map, span, span)
     assert str(e.value.message) == "Custom Internal Server Error"
+    
+@pytest.mark.asyncio
+async def test_throw_failed_responses_XXX(
+    request_adapter, mock_apierror_XXX_map, mock_error_object, mock_otel_span
+):
+    request_adapter.get_root_parse_node = AsyncMock(return_value=mock_error_object)
+    resp = httpx.Response(status_code=500, headers={"Content-Type": "application/json"})
+    assert resp.status_code == 500
+    content_type = request_adapter.get_response_content_type(resp)
+    assert content_type == "application/json"
+
+    with pytest.raises(APIError) as e:
+        span = mock_otel_span
+        await request_adapter.throw_failed_responses(resp, mock_apierror_XXX_map, span, span)
+    assert str(e.value.message) == "OdataError"
+
 
 
 @pytest.mark.asyncio

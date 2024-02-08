@@ -49,26 +49,48 @@ def mock_error_object():
 
 
 @pytest.fixture
-def mock_error_map():
+def mock_error_500_map():
     return {
         "500": Exception("Internal Server Error"),
     }
 
-
 @pytest.fixture
 def mock_apierror_map():
     return {
-        "500":
-        APIError(
-            "Custom Internal Server Error", {
-                'cache-control': 'private',
-                'transfer-encoding': 'chunked',
-                'content-type': 'application/json'
-            }, 500
-        )
+        "400": APIError(
+                    "Resource not found",
+                    400,
+                    {
+                        'cache-control': 'private',
+                        'transfer-encoding': 'chunked',
+                        'content-type': 'application/json'
+                    },
+                ),
+        "500": APIError(
+                    "Custom Internal Server Error",
+                    500,
+                    {
+                        'cache-control': 'private',
+                        'transfer-encoding': 'chunked',
+                        'content-type': 'application/json'
+                    },
+                ),
     }
 
-
+@pytest.fixture
+def mock_apierror_XXX_map():
+    return {
+        "XXX": APIError(
+                    "OdataError",
+                    400,
+                    {
+                        'cache-control': 'private',
+                        'transfer-encoding': 'chunked',
+                        'content-type': 'application/json'
+                    },
+                ),
+    }
+    
 @pytest.fixture
 def mock_request_adapter():
     resp = httpx.Response(

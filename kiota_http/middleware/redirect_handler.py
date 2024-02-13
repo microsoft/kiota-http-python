@@ -20,7 +20,7 @@ class RedirectHandler(BaseMiddleware):
         301,  # Moved Permanently
         302,  # Found
         303,  # See Other
-        307,  # Temporary Permanently
+        307,  # Temporary Redirect
         308,  # Moved Permanently
     }
     STATUS_CODE_SEE_OTHER: int = 303
@@ -83,13 +83,13 @@ class RedirectHandler(BaseMiddleware):
                 if not self.increment(response, max_redirect, history[:]):
                     break
                 _redirect_span.set_attribute(REDIRECT_COUNT_KEY, len(history))
-                new_request = self._build_redirect_request(request, response)
+                new_request = self._build_redirect_request(request, response, current_options)
+                history.append(request)
                 request = new_request
+                await response.aclose()
                 continue
-
-            response.history = history
             break
-
+        response.history = history
         if max_redirect < 0:
             exc = RedirectError(f"Too many redirects. {response.history}")
             _redirect_span.record_exception(exc)
@@ -108,19 +108,22 @@ class RedirectHandler(BaseMiddleware):
         Returns:
             RedirectHandlerOption: The options to used.
         """
-        current_options = request.options.get( # type:ignore
-            RedirectHandlerOption.get_key(), self.options)
-        return current_options
+        request_options = getattr(request, "options", None)
+        if request_options:
+            current_options = request_options.get( # type:ignore
+                RedirectHandlerOption.get_key(), self.options)
+            return current_options
+        return self.options
 
     def _build_redirect_request(
-        self, request: httpx.Request, response: httpx.Response
+        self, request: httpx.Request, response: httpx.Response, options: RedirectHandlerOption
     ) -> httpx.Request:
         """
         Given a request and a redirect response, return a new request that
         should be used to effect the redirect.
         """
         method = self._redirect_method(request, response)
-        url = self._redirect_url(request, response)
+        url = self._redirect_url(request, response, options)
         headers = self._redirect_headers(request, url, method)
         stream = self._redirect_stream(request, method)
         new_request = httpx.Request(
@@ -130,7 +133,8 @@ class RedirectHandler(BaseMiddleware):
             stream=stream,
             extensions=request.extensions,
         )
-        new_request.context = request.context  #type: ignore
+        if hasattr(request, "context"):
+            new_request.context = request.context  #type: ignore
         new_request.options = {}  #type: ignore
         return new_request
 
@@ -142,7 +146,7 @@ class RedirectHandler(BaseMiddleware):
         method = request.method
 
         # https://tools.ietf.org/html/rfc7231#section-6.4.4
-        if response.status_code == 303 and method != "HEAD":
+        if response.status_code == self.STATUS_CODE_SEE_OTHER and method != "HEAD":
             method = "GET"
 
         # Do what the browsers do, despite standards...
@@ -157,7 +161,9 @@ class RedirectHandler(BaseMiddleware):
 
         return method
 
-    def _redirect_url(self, request: httpx.Request, response: httpx.Response) -> httpx.URL:
+    def _redirect_url(
+        self, request: httpx.Request, response: httpx.Response, options: RedirectHandlerOption
+    ) -> httpx.URL:
         """
         Return the URL for the redirect to follow.
         """
@@ -167,6 +173,13 @@ class RedirectHandler(BaseMiddleware):
             url = httpx.URL(location)
         except Exception as exc:
             raise Exception(f"Invalid URL in location header: {exc}.")
+
+        if url.scheme != request.url.scheme and not options.allow_redirect_on_scheme_change:
+            raise Exception(
+                "Redirects with changing schemes not allowed by default.\
+                You can change this by modifying the allow_redirect_on_scheme_change\
+                request option."
+            )
 
         # Handle malformed 'Location' headers that are "absolute" form, have no host.
         # See: https://github.com/encode/httpx/issues/771

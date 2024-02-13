@@ -20,13 +20,32 @@ class UserAgentHandler(BaseMiddleware):
         Checks if the request has a User-Agent header and updates it if the
         platform config allows.
         """
+        current_options = self._get_current_options(request)
         _span = self._create_observability_span(request, "UserAgentHandler_send")
-        if self.options and self.options.is_enabled:
+        if current_options and current_options.is_enabled:
             _span.set_attribute("com.microsoft.kiota.handler.useragent.enable", True)
             value = f"{self.options.product_name}/{self.options.product_version}"
             self._update_user_agent(request, value)
         _span.end()
         return await super().send(request, transport)
+
+    def _get_current_options(self, request: Request) -> UserAgentHandlerOption:
+        """Returns the options to use for the request.Overries default options if
+        request options are passed.
+
+        Args:
+            request (httpx.Request): The prepared request object
+
+        Returns:
+            UserAgentHandlerOption: The options to be used.
+        """
+        request_options = getattr(request, "options", None)
+        if request_options:
+            current_options = request.options.get(  # type:ignore
+                UserAgentHandlerOption.get_key(), self.options
+            )
+            return current_options
+        return self.options
 
     def _update_user_agent(self, request: Request, value: str):
         """Updates the values of the User-Agent header."""

@@ -43,18 +43,18 @@ class HeadersInspectionHandler(BaseMiddleware):
         Returns:
             Response: The response object.
         """
-        self.options = self._get_current_options(request)
+        current_options = self._get_current_options(request)
         span = self._create_observability_span(request, "HeadersInspectionHandler_send")
         span.set_attribute(HEADERS_INSPECTION_KEY, True)
         span.end()
 
-        if self.options and self.options.inspect_request_headers:
+        if current_options and current_options.inspect_request_headers:
             for header in request.headers:
-                self.options.request_headers.add(header, request.headers[header])
+                current_options.request_headers.add(header, request.headers[header])
         response = await super().send(request, transport)
-        if self.options and self.options.inspect_response_headers:
+        if current_options and current_options.inspect_response_headers:
             for header in response.headers:
-                self.options.response_headers.add(header, response.headers[header])
+                current_options.response_headers.add(header, response.headers[header])
         return response
 
     def _get_current_options(self, request: httpx.Request) -> HeadersInspectionHandlerOption:
@@ -67,10 +67,16 @@ class HeadersInspectionHandler(BaseMiddleware):
         Returns:
             HeadersInspectionHandlerOption: The options to be used.
         """
+        current_options = None
         request_options = getattr(request, "options", None)
         if request_options:
-            current_options = request.options.get(  # type:ignore
-                HeadersInspectionHandlerOption.get_key(), HeadersInspectionHandlerOption()
+            current_options = request_options.get(  # type:ignore
+                HeadersInspectionHandlerOption.get_key(), None
             )
+        if current_options:
             return current_options
-        return HeadersInspectionHandlerOption()
+
+        # Clear headers per request
+        self.options.request_headers.clear()
+        self.options.response_headers.clear()
+        return self.options

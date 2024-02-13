@@ -55,10 +55,13 @@ class UrlReplaceHandler(BaseMiddleware):
         Returns:
             UrlReplaceHandlerOption: The options to be used.
         """
-        current_options = request.options.get(  # type:ignore
-            UrlReplaceHandlerOption.get_key(), self.options
-        )
-        return current_options
+        request_options = getattr(request, "options", None)
+        if request_options:
+            current_options = request.options.get(  # type:ignore
+                UrlReplaceHandlerOption.get_key(), self.options
+            )
+            return current_options
+        return self.options
 
     def replace_url_segment(self, url_str: str, current_options: UrlReplaceHandlerOption) -> str:
         if all([current_options, current_options.is_enabled, current_options.replacement_pairs]):

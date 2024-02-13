@@ -4,7 +4,7 @@ import pytest
 from kiota_http.middleware import ParametersNameDecodingHandler
 from kiota_http.middleware.options import ParametersNameDecodingHandlerOption
 
-
+OPTION_KEY = "ParametersNameDecodingHandlerOption"
 def test_no_config():
     """
     Test that default values are used if no custom confguration is passed
@@ -12,7 +12,7 @@ def test_no_config():
     handler = ParametersNameDecodingHandler()
     assert handler.options.enabled is True
     assert handler.options.characters_to_decode == [".", "-", "~", "$"]
-    assert handler.options.get_key() == "ParametersNameDecodingHandlerOption"
+    assert handler.options.get_key() == OPTION_KEY
 
 
 def test_custom_options():
@@ -26,7 +26,7 @@ def test_custom_options():
 
     assert handler.options.enabled is not True
     assert "$" not in handler.options.characters_to_decode
-    assert handler.options.get_key() == "ParametersNameDecodingHandlerOption"
+    assert handler.options.get_key() == OPTION_KEY
 
 
 @pytest.mark.asyncio

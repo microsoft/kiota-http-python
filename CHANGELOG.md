@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Changed
-- Bugfix issues with middleware maintaing state across requests.[#281](https://github.com/microsoft/kiota-http-python/issues/281)
+- Bugfix issues with middleware maintaining state across requests.[#281](https://github.com/microsoft/kiota-http-python/issues/281)
 - Fix issue with redirect handler not closing old responses.[#299](https://github.com/microsoft/kiota-http-python/issues/299)
 
 ## [1.3.0] - 2024-02-08

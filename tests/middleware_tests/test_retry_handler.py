@@ -163,7 +163,7 @@ async def test_ok_response_not_retried():
     handler = RetryHandler()
     request = httpx.Request(
         'GET',
-        'https://localhost',
+        BASE_URL,
     )
     mock_transport = httpx.MockTransport(request_handler)
     resp = await handler.send(request, mock_transport)
@@ -186,7 +186,7 @@ async def test_retries_valid():
     handler = RetryHandler()
     request = httpx.Request(
         'GET',
-        'https://localhost',
+        BASE_URL,
     )
     mock_transport = httpx.MockTransport(request_handler)
     resp = await handler.send(request, mock_transport)
@@ -208,7 +208,7 @@ async def test_should_retry_false():
     handler = RetryHandler(RetryHandlerOption(10, 1, False))
     request = httpx.Request(
         'GET',
-        'https://localhost',
+        BASE_URL,
     )
     mock_transport = httpx.MockTransport(request_handler)
     resp = await handler.send(request, mock_transport)
@@ -230,7 +230,7 @@ async def test_returns_same_status_code_if_delay_greater_than_max_delay():
     handler = RetryHandler(RetryHandlerOption(10, 1, True))
     request = httpx.Request(
         'GET',
-        'https://localhost',
+        BASE_URL,
     )
     mock_transport = httpx.MockTransport(request_handler)
     resp = await handler.send(request, mock_transport)
@@ -253,7 +253,7 @@ async def test_retry_options_apply_per_request():
     # Requet 1
     request = httpx.Request(
         'GET',
-        'https://localhost',
+        BASE_URL,
         headers={"request_1": "request_1_header"}
     )
     mock_transport = httpx.MockTransport(request_handler)
@@ -265,7 +265,7 @@ async def test_retry_options_apply_per_request():
     # Request 2
     request = httpx.Request(
         'GET',
-        'https://localhost',
+        BASE_URL,
         headers={"request_2": "request_2_header"}
     )
     mock_transport = httpx.MockTransport(request_handler)

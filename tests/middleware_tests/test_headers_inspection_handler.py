@@ -36,12 +36,37 @@ def test_headers_inspection_handler_construction():
     assert handler
     
 @pytest.mark.asyncio
-async def test_headers_inspection_handler_gets_headers(mock_async_transport):
-    request = httpx.Request('GET', 'https://localhost', headers={'test': 'test_request_header'})
+async def test_headers_inspection_handler_gets_headers():
+    def request_handler(request: httpx.Request):
+        return httpx.Response(
+            200,
+            json={"text": "Hello, world!"},
+            headers={'test_response': 'test_response_header'}
+        )
     handler = HeadersInspectionHandler()
-    resp = await handler.send(request, mock_async_transport)
+    
+    # First request
+    request = httpx.Request(
+        'GET',
+        'https://localhost',
+        headers={'test_request': 'test_request_header'}
+    )
+    mock_transport = httpx.MockTransport(request_handler)
+    resp = await handler.send(request, mock_transport)
     assert resp.status_code == 200
-    assert handler.options.request_headers.try_get('test') == {'test_request_header'}
-    assert handler.options.response_headers.try_get('test') == {'test_response_header'}
+    assert handler.options.request_headers.try_get('test_request') == {'test_request_header'}
+    assert handler.options.response_headers.try_get('test_response') == {'test_response_header'}
+    
+    # Second request
+    request2 = httpx.Request(
+        'GET',
+        'https://localhost',
+        headers={'test_request_2': 'test_request_header_2'}
+    )
+    resp = await handler.send(request2, mock_transport)
+    assert resp.status_code == 200
+    assert not handler.options.request_headers.try_get('test_request') == {'test_request_header'}
+    assert handler.options.request_headers.try_get('test_request_2') == {'test_request_header_2'}
+    assert handler.options.response_headers.try_get('test_response') == {'test_response_header'}
     
     

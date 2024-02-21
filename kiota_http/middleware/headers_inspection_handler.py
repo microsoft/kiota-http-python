@@ -67,9 +67,16 @@ class HeadersInspectionHandler(BaseMiddleware):
         Returns:
             HeadersInspectionHandlerOption: The options to be used.
         """
-        if options := getattr(request, "options", None):
-            current_options = options.get(  # type:ignore
-                HeadersInspectionHandlerOption.get_key(), self.options
+        current_options = None
+        request_options = getattr(request, "options", None)
+        if request_options:
+            current_options = request_options.get(  # type:ignore
+                HeadersInspectionHandlerOption.get_key(), None
             )
+        if current_options:
             return current_options
+
+        # Clear headers per request
+        self.options.request_headers.clear()
+        self.options.response_headers.clear()
         return self.options

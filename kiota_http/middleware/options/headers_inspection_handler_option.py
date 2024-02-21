@@ -18,8 +18,8 @@ class HeadersInspectionHandlerOption(RequestOption):
         self,
         inspect_request_headers: bool = True,
         inspect_response_headers: bool = True,
-        request_headers: HeadersCollection = HeadersCollection(),
-        response_headers: HeadersCollection = HeadersCollection()
+        request_headers: HeadersCollection = None,
+        response_headers: HeadersCollection = None,
     ) -> None:
         """Creates an instance of headers inspection handler option.
 
@@ -31,8 +31,8 @@ class HeadersInspectionHandlerOption(RequestOption):
         """
         self._inspect_request_headers = inspect_request_headers
         self._inspect_response_headers = inspect_response_headers
-        self._request_headers = request_headers
-        self._response_headers = response_headers
+        self._request_headers = request_headers if request_headers else HeadersCollection()
+        self._response_headers = response_headers if response_headers else HeadersCollection()
 
     @property
     def inspect_request_headers(self):

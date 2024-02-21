@@ -75,6 +75,7 @@ class RetryHandler(BaseMiddleware):
         _span.set_attribute("com.microsoft.kiota.handler.retry.enable", True)
         _span.end()
         retry_valid = current_options.should_retry
+        max_delay = current_options.max_delay
         _retry_span = self._create_observability_span(
             request, f"RetryHandler_send - attempt {retry_count}"
         )
@@ -91,10 +92,10 @@ class RetryHandler(BaseMiddleware):
             # Check if the request needs to be retried based on the response method
             # and status code
             should_retry = self.should_retry(request, current_options, response)
-            if all([should_retry, retry_valid, delay < current_options.max_delay]):
+            if all([should_retry, retry_valid, delay < max_delay]):
                 time.sleep(delay)
                 end_time = time.time()
-                current_options.max_delay -= (end_time - start_time)
+                max_delay -= (end_time - start_time)
                 # increment the count for retries
                 retry_count += 1
                 request.headers.update({'retry-attempt': f'{retry_count}'})
@@ -116,9 +117,12 @@ class RetryHandler(BaseMiddleware):
         Returns:
             RetryHandlerOption: The options to used.
         """
-        current_options = request.options.get( # type:ignore
-            RetryHandlerOption.get_key(), self.options)
-        return current_options
+        request_options = getattr(request, "options", None)
+        if request_options:
+            current_options = request_options.get( # type:ignore
+                RetryHandlerOption.get_key(), self.options)
+            return current_options
+        return self.options
 
     def should_retry(self, request, options, response):
         """

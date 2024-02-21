@@ -72,8 +72,9 @@ class ParametersNameDecodingHandler(BaseMiddleware):
         Returns:
             ParametersNameDecodingHandlerOption: The options to used.
         """
-        if options := getattr(request, "options", None):
-            current_options = options.get(  # type:ignore
+        request_options = getattr(request, "options", None)
+        if request_options:
+            current_options = request_options.get(  # type:ignore
                 ParametersNameDecodingHandlerOption.get_key(), self.options
             )
             return current_options

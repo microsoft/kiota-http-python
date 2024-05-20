@@ -52,7 +52,7 @@ pytest-cov==5.0.0
 
 pytest-mock==3.14.0
 
-requests==2.31.0
+requests==2.32.0
 
 toml==0.10.2
 

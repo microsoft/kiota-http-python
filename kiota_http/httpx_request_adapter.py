@@ -329,6 +329,7 @@ class HttpxRequestAdapter(RequestAdapter, Generic[ModelType]):
             root_node = await self.get_root_parse_node(response, parent_span, parent_span)
             if not root_node:
                 return None
+            value = None
             if response_type == "str":
                 value = root_node.get_str_value()
             if response_type == "int":

@@ -1,10 +1,8 @@
 """HTTPX client request adapter."""
 import re
-from collections.abc import AsyncIterable, Iterable
 from datetime import datetime
 from typing import Any, Dict, Generic, List, Optional, TypeVar, Union
 from urllib import parse
-from urllib.parse import unquote
 
 import httpx
 from kiota_abstractions.api_client_builder import (
@@ -63,29 +61,29 @@ class HttpxRequestAdapter(RequestAdapter, Generic[ModelType]):
     def __init__(
         self,
         authentication_provider: AuthenticationProvider,
-        parse_node_factory: ParseNodeFactory = ParseNodeFactoryRegistry(),
-        serialization_writer_factory:
-        SerializationWriterFactory = SerializationWriterFactoryRegistry(),
-        http_client: httpx.AsyncClient = KiotaClientFactory.create_with_default_middleware(),
-        base_url: str = "",
-        observability_options=ObservabilityOptions(),
+        parse_node_factory: Optional[ParseNodeFactory] = None,
+        serialization_writer_factory: Optional[SerializationWriterFactory] = None,
+        http_client: Optional[httpx.AsyncClient] = None,
+        base_url: Optional[str] = None,
+        observability_options: Optional[ObservabilityOptions] = None,
     ) -> None:
         if not authentication_provider:
             raise TypeError("Authentication provider cannot be null")
         self._authentication_provider = authentication_provider
         if not parse_node_factory:
-            raise TypeError("Parse node factory cannot be null")
+            parse_node_factory = ParseNodeFactoryRegistry()
         self._parse_node_factory = parse_node_factory
         if not serialization_writer_factory:
-            raise TypeError("Serialization writer factory cannot be null")
+            serialization_writer_factory = SerializationWriterFactoryRegistry()
         self._serialization_writer_factory = serialization_writer_factory
         if not http_client:
-            raise TypeError("Http Client cannot be null")
+            http_client = KiotaClientFactory.create_with_default_middleware()
+        self._http_client = http_client
+        if not base_url:
+            base_url = ""
+        self._base_url: str = base_url
         if not observability_options:
             observability_options = ObservabilityOptions()
-
-        self._http_client = http_client
-        self._base_url: str = base_url
         self.observability_options = observability_options
 
     @property

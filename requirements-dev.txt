@@ -1,6 +1,6 @@
 -i https://pypi.org/simple
 
-astroid==3.2.3
+astroid==3.2.4
 
 certifi==2024.7.4
 
@@ -42,7 +42,7 @@ platformdirs==4.2.2
 
 pluggy==1.5.0
 
-pylint==3.2.5
+pylint==3.2.6
 
 pytest==8.3.1
 

@@ -174,7 +174,7 @@ class RedirectHandler(BaseMiddleware):
         except Exception as exc:
             raise Exception(f"Invalid URL in location header: {exc}.")
 
-        if not u.is_relative_url and url.scheme != request.url.scheme and not options.allow_redirect_on_scheme_change:
+        if not url.is_relative_url and url.scheme != request.url.scheme and not options.allow_redirect_on_scheme_change:
             raise Exception(
                 "Redirects with changing schemes not allowed by default.\
                 You can change this by modifying the allow_redirect_on_scheme_change\

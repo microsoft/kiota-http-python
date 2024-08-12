@@ -175,7 +175,7 @@ class RedirectHandler(BaseMiddleware):
             raise Exception(f"Invalid URL in location header: {exc}.")
 
         if (
-            not url.is_relative_url and url.scheme != request.url.scheme 
+            not url.is_relative_url and url.scheme != request.url.scheme
             and not options.allow_redirect_on_scheme_change
         ):
             raise Exception(

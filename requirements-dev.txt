@@ -4,7 +4,7 @@ astroid==3.2.4
 
 certifi==2024.8.30
 
-charset-normalizer==3.3.2
+charset-normalizer==3.4.0
 
 colorama==0.4.6
 

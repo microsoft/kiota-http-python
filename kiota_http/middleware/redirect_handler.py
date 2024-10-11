@@ -77,9 +77,7 @@ class RedirectHandler(BaseMiddleware):
                 request, f"RedirectHandler_send - redirect {len(history)}"
             )
             response = await super().send(request, transport)
-            _redirect_span.set_attribute(
-                HTTP_RESPONSE_STATUS_CODE, response.status_code
-            )
+            _redirect_span.set_attribute(HTTP_RESPONSE_STATUS_CODE, response.status_code)
             redirect_location = self.get_redirect_location(response)
 
             if redirect_location and current_options.should_redirect:

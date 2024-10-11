@@ -101,7 +101,7 @@ class RetryHandler(BaseMiddleware):
                 # increment the count for retries
                 retry_count += 1
                 request.headers.update({'retry-attempt': f'{retry_count}'})
-                _retry_span.set_attribute('http.resend_count', retry_count)
+                _retry_span.set_attribute('http.request.resend_count', retry_count)
                 continue
             break
         if response is None:

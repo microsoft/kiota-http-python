@@ -24,7 +24,13 @@ from kiota_abstractions.serialization import (
 )
 from kiota_abstractions.store import BackingStoreFactory, BackingStoreFactorySingleton
 from opentelemetry import trace
-from opentelemetry.semconv.trace import SpanAttributes
+from opentelemetry.semconv.attributes.http_attributes import (
+    HTTP_RESPONSE_STATUS_CODE,
+    HTTP_REQUEST_METHOD,
+)
+from opentelemetry.semconv.attributes.network_attributes import NETWORK_PROTOCOL_NAME
+from opentelemetry.semconv.attributes.server_attributes import SERVER_ADDRESS
+from opentelemetry.semconv.attributes.url_attributes import URL_SCHEME, URL_FULL
 
 from kiota_http._exceptions import (
     BackingStoreError,
@@ -529,15 +535,15 @@ class HttpxRequestAdapter(RequestAdapter, Generic[ModelType]):
         resp = await self._http_client.send(request)
         if not resp:
             raise ResponseError("Unable to get response from request")
-        parent_span.set_attribute(SpanAttributes.HTTP_STATUS_CODE, resp.status_code)
+        parent_span.set_attribute(HTTP_RESPONSE_STATUS_CODE, resp.status_code)
         if http_version := resp.http_version:
-            parent_span.set_attribute(SpanAttributes.HTTP_FLAVOR, http_version)
+            parent_span.set_attribute(NETWORK_PROTOCOL_NAME, http_version)
 
         if content_length := resp.headers.get("Content-Length", None):
-            parent_span.set_attribute(SpanAttributes.HTTP_RESPONSE_CONTENT_LENGTH, content_length)
+            parent_span.set_attribute("http.response.body.size", content_length)
 
         if content_type := resp.headers.get("Content-Type", None):
-            parent_span.set_attribute("http.response_content_type", content_type)
+            parent_span.set_attribute("http.response.header.content-type", content_type)
         _get_http_resp_span.end()
         return await self.retry_cae_response_if_required(resp, request_info, claims)
 
@@ -586,15 +592,15 @@ class HttpxRequestAdapter(RequestAdapter, Generic[ModelType]):
         )
         url = parse.urlparse(request_info.url)
         otel_attributes = {
-            SpanAttributes.HTTP_METHOD: request_info.http_method,
+            HTTP_REQUEST_METHOD: request_info.http_method,
             "http.port": url.port,
-            SpanAttributes.HTTP_HOST: url.hostname,
-            SpanAttributes.HTTP_SCHEME: url.scheme,
-            "http.uri_template": request_info.url_template,
+            URL_SCHEME: url.hostname,
+            SERVER_ADDRESS: url.scheme,
+            "url.uri_template": request_info.url_template,
         }
 
         if self.observability_options.include_euii_attributes:
-            otel_attributes.update({"http.uri": url.geturl()})
+            otel_attributes.update({URL_FULL: url.geturl()})
 
         request = self._http_client.build_request(
             method=request_info.http_method.value,
@@ -610,10 +616,10 @@ class HttpxRequestAdapter(RequestAdapter, Generic[ModelType]):
         setattr(request, "options", request_options)
 
         if content_length := request.headers.get("Content-Length", None):
-            otel_attributes.update({SpanAttributes.HTTP_REQUEST_CONTENT_LENGTH: content_length})
+            otel_attributes.update({"http.request.body.size": content_length})
 
         if content_type := request.headers.get("Content-Type", None):
-            otel_attributes.update({"http.request_content_type": content_type})
+            otel_attributes.update({"http.request.header.content-type": content_type})
         attribute_span.set_attributes(otel_attributes)
         _get_request_span.set_attributes(otel_attributes)
         _get_request_span.end()

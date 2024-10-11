@@ -1,6 +1,5 @@
 from httpx import AsyncBaseTransport, Request, Response
 from kiota_abstractions.request_option import RequestOption
-from opentelemetry.semconv.trace import SpanAttributes
 
 from .middleware import BaseMiddleware
 from .options import UserAgentHandlerOption

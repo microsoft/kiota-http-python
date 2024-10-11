@@ -2,7 +2,9 @@ import typing
 
 import httpx
 from kiota_abstractions.request_option import RequestOption
-from opentelemetry.semconv.trace import SpanAttributes
+from opentelemetry.semconv.attributes.http_attributes import (
+    HTTP_RESPONSE_STATUS_CODE,
+)
 
 from .._exceptions import RedirectError
 from .middleware import BaseMiddleware
@@ -75,7 +77,7 @@ class RedirectHandler(BaseMiddleware):
                 request, f"RedirectHandler_send - redirect {len(history)}"
             )
             response = await super().send(request, transport)
-            _redirect_span.set_attribute(SpanAttributes.HTTP_STATUS_CODE, response.status_code)
+            _redirect_span.set_attribute(HTTP_RESPONSE_STATUS_CODE, response.status_code)
             redirect_location = self.get_redirect_location(response)
 
             if redirect_location and current_options.should_redirect:
